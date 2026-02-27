@@ -72,7 +72,7 @@ export function PhotoUpload({ onPhotosSelected }: PhotoUploadProps) {
                 <AnimatePresence>
                     {previews.length > 0 && (
                         <motion.div
-                            className="grid grid-cols-2 md:grid-cols-3 gap-4"
+                            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                         >

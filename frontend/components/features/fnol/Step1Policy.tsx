@@ -42,7 +42,7 @@ export function Step1Policy({ form }: Step1Props) {
                     )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="claimant_email">Email</Label>
                         <Input
