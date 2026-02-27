@@ -6,12 +6,13 @@ from app.core.database import get_db
 from app.models.claims import Claim, ClaimPhoto
 from app.schemas.claims import ClaimCreate, ClaimResponse, ClaimPhotoResponse
 from app.services.storage import storage_service
+from app.core.security import get_api_key
 from datetime import datetime
 import uuid
 
 router = APIRouter()
 
-@router.post("/", response_model=ClaimResponse)
+@router.post("/", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
 async def create_claim(
     claim_in: ClaimCreate,
     db: AsyncSession = Depends(get_db)
@@ -42,7 +43,7 @@ async def create_claim(
     await db.refresh(new_claim)
     return new_claim
 
-@router.get("/{claim_id}", response_model=ClaimResponse)
+@router.get("/{claim_id}", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
 async def get_claim(
     claim_id: uuid.UUID,
     db: AsyncSession = Depends(get_db)
@@ -58,7 +59,7 @@ async def get_claim(
     # For now, let's assume simple access. If relationships fail in async, we need joinedload.
     return claim
 
-@router.post("/{claim_id}/photos", response_model=ClaimPhotoResponse)
+@router.post("/{claim_id}/photos", response_model=ClaimPhotoResponse, dependencies=[Depends(get_api_key)])
 async def upload_claim_photo(
     claim_id: uuid.UUID,
     file: UploadFile = File(...),

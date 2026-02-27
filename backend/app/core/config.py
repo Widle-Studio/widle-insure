@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "Widle Insure API"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = "supersecretkey"
+    API_KEY: str # No default value, required from environment
     
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
