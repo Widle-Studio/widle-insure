@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from typing import Optional
+from app.core.security import get_api_key
 
 router = APIRouter()
 
@@ -38,7 +39,7 @@ MOCK_POLICIES = {
     }
 }
 
-@router.get("/{policy_number}", response_model=PolicyResponse)
+@router.get("/{policy_number}", response_model=PolicyResponse, dependencies=[Depends(get_api_key)])
 async def get_policy(policy_number: str):
     """
     Mock endpoint to retrieve policy details.
