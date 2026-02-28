@@ -2,6 +2,7 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 from app.core.database import get_db
 from app.models.claims import Claim, ClaimPhoto
 from app.schemas.claims import ClaimCreate, ClaimResponse, ClaimPhotoResponse
@@ -40,7 +41,14 @@ async def create_claim(
     db.add(new_claim)
     await db.commit()
     await db.refresh(new_claim)
-    return new_claim
+
+    # Reload with photos relationship
+    result = await db.execute(
+        select(Claim)
+        .options(selectinload(Claim.photos))
+        .where(Claim.id == new_claim.id)
+    )
+    return result.scalars().first()
 
 @router.get("/{claim_id}", response_model=ClaimResponse)
 async def get_claim(
@@ -50,12 +58,14 @@ async def get_claim(
     """
     Get a claim by ID.
     """
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
+    result = await db.execute(
+        select(Claim)
+        .options(selectinload(Claim.photos))
+        .where(Claim.id == claim_id)
+    )
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-    # Helper to fetch photos eagerly if needed, or rely on lazy loading (async compatibility issue potentially)
-    # For now, let's assume simple access. If relationships fail in async, we need joinedload.
     return claim
 
 @router.post("/{claim_id}/photos", response_model=ClaimPhotoResponse)
@@ -79,7 +89,7 @@ async def upload_claim_photo(
     # Create Photo Record
     new_photo = ClaimPhoto(
         claim_id=claim_id,
-        photo_url=file_path, # Storing local path as URL for now
+        photo_url=file_path,
         photo_type=file.content_type
     )
     

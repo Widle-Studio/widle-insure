@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from uuid import UUID
 from datetime import datetime
 
@@ -23,10 +23,12 @@ class ClaimPhotoResponse(BaseModel):
     id: UUID
     photo_url: str
     description: Optional[str] = None
-    created_at: datetime
+    # Map uploaded_at from model to created_at in schema, or just use uploaded_at
+    created_at: datetime = Field(..., alias="uploaded_at")
 
     class Config:
         from_attributes = True
+        populate_by_name = True
 
 class ClaimResponse(ClaimBase):
     id: UUID
