@@ -1,9 +1,45 @@
-node_modules/
-__pycache__/
-*.pyc
-.pytest_cache/
-.env
-backend/uploads/
-venv/
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Environments
+.env
+.env.local
+.venv
+venv/
+ENV/
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+backend/uploads/
 sql_app.db
+
+# Node / Frontend
+node_modules/
+dist/
+build/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Logs
+logs/
+*.log
+
+# Docker
+.docker/
+docker-compose.override.yml
