@@ -335,11 +335,13 @@ Day 5: Analytics Dashboard
 ```
 Day 1-2: Adjudication Rules Engine
 [ ] Create rules engine module
-[ ] Auto-approve logic:
-  - Damage < $2000
-  - No fraud flags
-  - Policy active
+[ ] Auto-approve logic (with strict deterministic guardrails):
+  - Damage < $2000 (Hard limit on AI authority)
+  - Estimated cost <= (Policy Coverage Limit - Deductible)
+  - No fraud flags (Fraud score < threshold)
+  - Policy status must be 'Active'
   - High AI confidence (>90%)
+  - ZERO AI-identified red flags
 [ ] Human review queue logic:
   - Damage > $5000
   - Fraud indicators present
