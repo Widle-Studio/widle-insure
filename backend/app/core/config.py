@@ -4,7 +4,7 @@ from typing import Optional
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Widle Insure API"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = "supersecretkey"
+    SECRET_KEY: str # No default value, required from environment
     API_KEY: str # No default value, required from environment
     
     POSTGRES_SERVER: str = "localhost"
