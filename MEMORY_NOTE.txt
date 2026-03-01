@@ -1,0 +1,1 @@
+When writing test cases for services that write artifacts to the filesystem (like `StorageService`), always use `unittest.mock.patch` and `mock_open` to mock system and file IO calls (`os.makedirs`, `builtins.open`, `shutil.copyfileobj`, etc.). This guarantees deterministic tests and avoids creating actual files or directories on the developer's local filesystem.
