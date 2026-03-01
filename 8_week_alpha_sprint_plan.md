@@ -195,7 +195,7 @@ Day 5: Form Submission
 Day 1-2: Claude API Setup
 [ ] Install Anthropic SDK
 [ ] Create AI service module
-[ ] Write prompt template for damage assessment
+[ ] Write secure prompt template for damage assessment (prevent injection)
 [ ] Handle API errors and retries
 [ ] Set up token usage logging
 
@@ -216,14 +216,30 @@ Day 5: Testing
 [ ] Handle edge cases (no damage detected, unclear photos)
 ```
 
-### Prompt Template Example:
+### Prompt Template Example (Secure Implementation):
 ```python
-prompt = f"""You are an auto insurance claims adjuster. Analyze this vehicle damage photo.
+def sanitize_input(text: str) -> str:
+    """Sanitize user input to prevent prompt injection."""
+    import re
+    # Remove any XML-like tags that could interfere with the prompt structure
+    return re.sub(r'<[^>]*>', '', str(text))
 
-Photo context:
-- Vehicle: {vehicle_make} {vehicle_model} {vehicle_year}
-- Incident date: {incident_date}
-- Location: {incident_location}
+# System prompt separates instructions from data
+system_prompt = """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
+Provide your analysis based on the photo and the provided context.
+Strictly follow the output format provided."""
+
+# User content uses XML tags to delimit untrusted data
+user_content = f"""Here is the context for the claim:
+<vehicle_context>
+<make>{sanitize_input(vehicle_make)}</make>
+<model>{sanitize_input(vehicle_model)}</model>
+<year>{sanitize_input(vehicle_year)}</year>
+</vehicle_context>
+<incident_context>
+<date>{sanitize_input(incident_date)}</date>
+<location>{sanitize_input(incident_location)}</location>
+</incident_context>
 
 Provide your analysis in this format:
 1. Damage Severity: [Minor/Moderate/Major/Total Loss]
