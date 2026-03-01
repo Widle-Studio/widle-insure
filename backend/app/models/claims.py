@@ -1,9 +1,21 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean, ForeignKey, Numeric, Text, JSON, Uuid
-# from sqlalchemy.dialects.postgresql import UUID # Removed for SQLite compatibility
-from app.core.database import Base
 import uuid
-from sqlalchemy.sql import func
+
+from sqlalchemy import (
+    JSON,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    Uuid,
+)
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
+from app.core.database import Base
+
 
 class Claim(Base):
     __tablename__ = "claims"
@@ -27,8 +39,12 @@ class Claim(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
-    photos = relationship("ClaimPhoto", back_populates="claim", cascade="all, delete-orphan")
-    audit_logs = relationship("ClaimAuditLog", back_populates="claim", cascade="all, delete-orphan")
+    photos = relationship(
+        "ClaimPhoto", back_populates="claim", cascade="all, delete-orphan"
+    )
+    audit_logs = relationship(
+        "ClaimAuditLog", back_populates="claim", cascade="all, delete-orphan"
+    )
 
 class ClaimPhoto(Base):
     __tablename__ = "claim_photos"
