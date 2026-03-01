@@ -12,7 +12,8 @@ from alembic import context
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 from app.core.config import settings
-from app.models import Base
+from app.core.database import Base
+import app.models  # Ensure models are loaded for Alembic metadata
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
