@@ -7,10 +7,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "supersecretkey"
     API_KEY: str # No default value, required from environment
     
-    POSTGRES_SERVER: str = "localhost"
-    POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "password"
-    POSTGRES_DB: str = "insurance_claims"
+    POSTGRES_SERVER: str
+    POSTGRES_USER: str
+    POSTGRES_PASSWORD: str
+    POSTGRES_DB: str
     DATABASE_URL: Optional[str] = None
 
     @property
