@@ -1,8 +1,11 @@
-import pytest
-from httpx import AsyncClient, ASGITransport
-from app.main import app
-from app.core.config import settings
 from datetime import datetime, timezone
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from app.core.config import settings
+from app.main import app
+
 
 @pytest.fixture
 def valid_claim_payload():
@@ -17,19 +20,20 @@ def valid_claim_payload():
         "vehicle_year": 2022,
         "claimant_name": "John Doe",
         "claimant_email": "john.doe@example.com",
-        "claimant_phone": "555-0123"
+        "claimant_phone": "555-0123",
     }
+
 
 @pytest.mark.asyncio
 async def test_create_claim_unauthorized(valid_claim_payload: dict):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
-            f"{settings.API_V1_STR}/claims/",
-            json=valid_claim_payload
+            f"{settings.API_V1_STR}/claims/", json=valid_claim_payload
         )
 
     assert response.status_code == 403
+
 
 @pytest.mark.asyncio
 async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
@@ -40,12 +44,11 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
-            f"{settings.API_V1_STR}/claims/",
-            json=invalid_payload,
-            headers=auth_headers
+            f"{settings.API_V1_STR}/claims/", json=invalid_payload, headers=auth_headers
         )
 
     assert response.status_code == 422
+
 
 @pytest.mark.asyncio
 async def test_create_claim_success(valid_claim_payload: dict):
@@ -82,7 +85,7 @@ async def test_create_claim_success(valid_claim_payload: dict):
         response = await client.post(
             f"{settings.API_V1_STR}/claims/",
             json=valid_claim_payload,
-            headers=auth_headers
+            headers=auth_headers,
         )
 
     app.dependency_overrides.clear()

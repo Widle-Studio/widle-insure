@@ -1,7 +1,9 @@
-from typing import List, Optional
-from pydantic import BaseModel
-from uuid import UUID
 from datetime import datetime
+from typing import List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel
+
 
 class ClaimBase(BaseModel):
     policy_number: str
@@ -16,8 +18,10 @@ class ClaimBase(BaseModel):
     claimant_email: str
     claimant_phone: str
 
+
 class ClaimCreate(ClaimBase):
     pass
+
 
 class ClaimPhotoResponse(BaseModel):
     id: UUID
@@ -27,6 +31,7 @@ class ClaimPhotoResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
 
 class ClaimResponse(ClaimBase):
     id: UUID

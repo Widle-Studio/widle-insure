@@ -1,6 +1,6 @@
 import logging
 import sys
-from app.core.config import settings
+
 
 def setup_logging():
     """
@@ -10,11 +10,9 @@ def setup_logging():
     logging.basicConfig(
         level=logging.INFO,
         format=log_format,
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
-    
+
     # Set log levels for third-party libraries
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)

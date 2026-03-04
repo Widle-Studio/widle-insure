@@ -24,7 +24,7 @@ FastAPI backend for the AI-Automated Auto Insurance Claims Platform.
     ```bash
     docker compose up -d
     ```
-    
+
     Run migrations:
     ```bash
     alembic -c backend/alembic.ini upgrade head

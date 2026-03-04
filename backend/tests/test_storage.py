@@ -1,9 +1,11 @@
 import os
+from unittest.mock import MagicMock, mock_open, patch
+
 import pytest
-from unittest.mock import patch, MagicMock, mock_open
 from fastapi import UploadFile
 
 from app.services.storage import StorageService
+
 
 @patch("app.services.storage.os.path.exists")
 @patch("app.services.storage.os.makedirs")
@@ -14,6 +16,7 @@ def test_storage_service_init_creates_dir(mock_makedirs, mock_exists):
     mock_exists.assert_called_once_with("uploads")
     mock_makedirs.assert_called_once_with("uploads")
 
+
 @patch("app.services.storage.os.path.exists")
 @patch("app.services.storage.os.makedirs")
 def test_storage_service_init_dir_exists(mock_makedirs, mock_exists):
@@ -22,6 +25,7 @@ def test_storage_service_init_dir_exists(mock_makedirs, mock_exists):
     StorageService()
     mock_exists.assert_called_once_with("uploads")
     mock_makedirs.assert_not_called()
+
 
 @pytest.mark.asyncio
 @patch("app.services.storage.os.path.exists")
@@ -52,13 +56,16 @@ async def test_upload_file(mock_file, mock_copy, mock_uuid, mock_makedirs, mock_
     # Check that the returned path is correct
     assert file_path == expected_path
 
+
 @pytest.mark.asyncio
 @patch("app.services.storage.os.path.exists")
 @patch("app.services.storage.os.makedirs")
 @patch("app.services.storage.uuid4")
 @patch("app.services.storage.shutil.copyfileobj")
 @patch("builtins.open", new_callable=mock_open)
-async def test_upload_file_no_extension(mock_file, mock_copy, mock_uuid, mock_makedirs, mock_exists):
+async def test_upload_file_no_extension(
+    mock_file, mock_copy, mock_uuid, mock_makedirs, mock_exists
+):
     """Test uploading a file that has no extension."""
     mock_uuid.return_value = "87654321-4321-8765-4321-876543210987"
 
@@ -74,13 +81,15 @@ async def test_upload_file_no_extension(mock_file, mock_copy, mock_uuid, mock_ma
     mock_file.assert_called_once_with(expected_path, "wb")
 
     assert file_path == expected_path
-import shutil
-from unittest.mock import patch, MagicMock, mock_open
-from io import BytesIO
-from fastapi import UploadFile
-import pytest
 
-from app.services.storage import StorageService, UPLOAD_DIR
+
+from unittest.mock import MagicMock, mock_open, patch
+
+import pytest
+from fastapi import UploadFile
+
+from app.services.storage import UPLOAD_DIR, StorageService
+
 
 @patch("app.services.storage.os.makedirs")
 @patch("app.services.storage.os.path.exists")
@@ -95,6 +104,7 @@ def test_storage_service_init_creates_dir(mock_exists, mock_makedirs):
     mock_exists.assert_called_once_with(UPLOAD_DIR)
     mock_makedirs.assert_called_once_with(UPLOAD_DIR)
 
+
 @patch("app.services.storage.os.makedirs")
 @patch("app.services.storage.os.path.exists")
 def test_storage_service_init_does_not_create_dir(mock_exists, mock_makedirs):
@@ -108,13 +118,16 @@ def test_storage_service_init_does_not_create_dir(mock_exists, mock_makedirs):
     mock_exists.assert_called_once_with(UPLOAD_DIR)
     mock_makedirs.assert_not_called()
 
+
 @pytest.mark.asyncio
 @patch("app.services.storage.shutil.copyfileobj")
 @patch("builtins.open", new_callable=mock_open)
 @patch("app.services.storage.uuid4")
 @patch("app.services.storage.os.makedirs")
 @patch("app.services.storage.os.path.exists")
-async def test_upload_file(mock_exists, mock_makedirs, mock_uuid4, m_open, mock_copyfileobj):
+async def test_upload_file(
+    mock_exists, mock_makedirs, mock_uuid4, m_open, mock_copyfileobj
+):
     # Setup
     mock_exists.return_value = True
     mock_uuid4.return_value = "1234-5678"

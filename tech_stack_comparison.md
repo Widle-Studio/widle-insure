@@ -55,7 +55,7 @@ Each technology is scored on:
 | Llama 3.3 70B (Self-hosted) | $0.5/$0.5 | 3 | 3 | 4 | 3 | 3 | 16/25 | ✅ **COST OPTIMIZER** - For classification |
 | Mistral Large | $2/$6 | 3 | 4 | 4 | 3 | 4 | 18/25 | European data residency |
 
-**Recommendation**: 
+**Recommendation**:
 - **Primary**: Claude 4.5 for critical tasks (FNOL, fraud, adjudication)
 - **Secondary**: GPT-4o for summaries, simple Q&A
 - **Cost Saver**: Llama 3.3 for classification, routing (90% cheaper)
@@ -80,7 +80,7 @@ Total: ~$466/month (~$0.47/claim)
 | Tractable API | $50K+ | $5-10 | 95-98% | 2 | 5 | ❌ Too expensive for MVP | Enterprise only |
 | Claude 4.5 Vision + Rules | $0 | $0.50 | 75-85% | 4 | 4 | ✅ **MVP OPTION** | Fast to implement |
 
-**Recommendation**: 
+**Recommendation**:
 - **Alpha**: Claude Vision + rule-based logic (fastest)
 - **Beta**: Fine-tune YOLOv8 on Mitchell/CCC damage dataset
 - **Production**: YOLOv8 + ensemble with Claude for edge cases
@@ -127,7 +127,7 @@ Inference: Modal.com ($0.05/image) or self-hosted ($0.01/image)
 | AWS (EC2 + RDS) | $100+ | 2 | 5 | 3 | 2 | 17/25 | Too complex for MVP |
 | Heroku | $50+ | 4 | 3 | 3 | 4 | 19/25 | Expensive, acquired by Salesforce |
 
-**MVP Recommendation**: 
+**MVP Recommendation**:
 ```
 Frontend: Vercel ($20/month)
 Backend: Railway ($20/month)
@@ -188,7 +188,7 @@ Total: ~$45-70/month
 | New Relic | $99/mo | 5 | 3 | 5 | 5 | 23/25 | Good but pricey |
 | Grafana Cloud | Free tier | 4 | 3 | 4 | 4 | 19/25 | Great for infra |
 
-**Recommendation**: 
+**Recommendation**:
 - **Error Tracking**: Sentry ($26/month)
 - **Product Analytics**: PostHog (free tier)
 - **Infrastructure**: Grafana Cloud (free → $49/month)

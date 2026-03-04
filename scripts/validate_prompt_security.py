@@ -1,11 +1,15 @@
 import re
 
+
 def sanitize_input(text: str) -> str:
     """Sanitize user input to prevent prompt injection."""
     # Remove any XML-like tags that could interfere with the prompt structure
-    return re.sub(r'<[^>]*>', '', str(text))
+    return re.sub(r"<[^>]*>", "", str(text))
 
-def construct_prompt_secure(vehicle_make, vehicle_model, vehicle_year, incident_date, incident_location):
+
+def construct_prompt_secure(
+    vehicle_make, vehicle_model, vehicle_year, incident_date, incident_location
+):
     # System prompt separates instructions from data
     system_prompt = """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
 Provide your analysis based on the photo and the provided context.
@@ -34,6 +38,7 @@ Be conservative in your estimates. If unsure, flag for human review.
 """
     return system_prompt, user_content
 
+
 def test_prompt_injection():
     print("Testing Prompt Injection Mitigation...")
 
@@ -46,7 +51,9 @@ def test_prompt_injection():
 
     print(f"\nMalicious Input (vehicle_make): {malicious_make}")
 
-    system_p, user_p = construct_prompt_secure(malicious_make, model, year, date, location)
+    system_p, user_p = construct_prompt_secure(
+        malicious_make, model, year, date, location
+    )
 
     print("\n--- CONSTRUCTED SYSTEM PROMPT ---")
     print(system_p)
@@ -55,7 +62,12 @@ def test_prompt_injection():
 
     # Verification
     # Check if the specific malicious tags were removed
-    if "<system>" not in user_p and "</system>" not in user_p and user_p.count("<make>") == 1 and user_p.count("</make>") == 1:
+    if (
+        "<system>" not in user_p
+        and "</system>" not in user_p
+        and user_p.count("<make>") == 1
+        and user_p.count("</make>") == 1
+    ):
         print("\n✅ SUCCESS: Malicious XML tags were sanitized.")
     else:
         print("\n❌ FAILURE: Malicious XML tags were NOT correctly sanitized.")
@@ -63,7 +75,10 @@ def test_prompt_injection():
         print(f"Count of </make>: {user_p.count('</make>')}")
 
     if "Ignore previous instructions" in user_p:
-        print("⚠️ NOTE: The malicious text is still present but its effect is mitigated by being wrapped in XML tags and instructions being in the system prompt.")
+        print(
+            "⚠️ NOTE: The malicious text is still present but its effect is mitigated by being wrapped in XML tags and instructions being in the system prompt."
+        )
+
 
 if __name__ == "__main__":
     test_prompt_injection()

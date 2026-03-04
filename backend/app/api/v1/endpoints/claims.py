@@ -1,27 +1,29 @@
-from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+import uuid
+from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+
 from app.core.database import get_db
-from app.models.claims import Claim, ClaimPhoto
-from app.schemas.claims import ClaimCreate, ClaimResponse, ClaimPhotoResponse
-from app.services.storage import storage_service
 from app.core.security import get_api_key
-from datetime import datetime
-import uuid
+from app.models.claims import Claim, ClaimPhoto
+from app.schemas.claims import ClaimCreate, ClaimPhotoResponse, ClaimResponse
+from app.services.storage import storage_service
 
 router = APIRouter()
 
+
 @router.post("/", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
 async def create_claim(
-    claim_in: ClaimCreate,
-    db: AsyncSession = Depends(get_db)
+    claim_in: ClaimCreate, db: AsyncSession = Depends(get_db)
 ) -> Any:
     """
     Create a new claim.
     """
     claim_number = f"CLM-{datetime.now().year}-{uuid.uuid4().hex[:6].upper()}"
-    
+
     new_claim = Claim(
         policy_number=claim_in.policy_number,
         claim_number=claim_number,
@@ -35,19 +37,19 @@ async def create_claim(
         claimant_name=claim_in.claimant_name,
         claimant_email=claim_in.claimant_email,
         claimant_phone=claim_in.claimant_phone,
-        status="New"
+        status="New",
     )
-    
+
     db.add(new_claim)
     await db.commit()
     await db.refresh(new_claim)
     return new_claim
 
-@router.get("/{claim_id}", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
-async def get_claim(
-    claim_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db)
-) -> Any:
+
+@router.get(
+    "/{claim_id}", response_model=ClaimResponse, dependencies=[Depends(get_api_key)]
+)
+async def get_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> Any:
     """
     Get a claim by ID.
     """
@@ -59,11 +61,16 @@ async def get_claim(
     # For now, let's assume simple access. If relationships fail in async, we need joinedload.
     return claim
 
-@router.post("/{claim_id}/photos", response_model=ClaimPhotoResponse, dependencies=[Depends(get_api_key)])
+
+@router.post(
+    "/{claim_id}/photos",
+    response_model=ClaimPhotoResponse,
+    dependencies=[Depends(get_api_key)],
+)
 async def upload_claim_photo(
     claim_id: uuid.UUID,
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ) -> Any:
     """
     Upload a photo for a claim.
@@ -80,12 +87,12 @@ async def upload_claim_photo(
     # Create Photo Record
     new_photo = ClaimPhoto(
         claim_id=claim_id,
-        photo_url=file_path, # Storing local path as URL for now
-        photo_type=file.content_type
+        photo_url=file_path,  # Storing local path as URL for now
+        photo_type=file.content_type,
     )
-    
+
     db.add(new_photo)
     await db.commit()
     await db.refresh(new_photo)
-    
+
     return new_photo

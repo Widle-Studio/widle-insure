@@ -1,9 +1,12 @@
 import asyncio
 import uuid
 from datetime import datetime
-from app.core.database import AsyncSessionLocal, engine
-from app.models.claims import Claim
+
 from sqlalchemy import select
+
+from app.core.database import AsyncSessionLocal
+from app.models.claims import Claim
+
 
 async def seed_data():
     async with AsyncSessionLocal() as session:
@@ -14,7 +17,7 @@ async def seed_data():
             return
 
         print("Seeding test claims...")
-        
+
         claims = [
             Claim(
                 id=uuid.uuid4(),
@@ -30,13 +33,15 @@ async def seed_data():
                 vehicle_make="Toyota",
                 vehicle_model="Camry",
                 vehicle_year=2020,
-                status="pending"
-            ) for i in range(1, 11)
+                status="pending",
+            )
+            for i in range(1, 11)
         ]
-        
+
         session.add_all(claims)
         await session.commit()
         print(f"Successfully created {len(claims)} test claims.")
+
 
 if __name__ == "__main__":
     asyncio.run(seed_data())

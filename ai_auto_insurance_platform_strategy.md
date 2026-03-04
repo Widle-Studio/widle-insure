@@ -75,7 +75,7 @@
 - **Framework**: Next.js 14+ (React)
   - *Why*: SSR, excellent performance, TypeScript support
   - *Cost*: Free + Vercel hosting ($20/month for Pro)
-  
+
 - **UI Library**: Shadcn/ui + Tailwind CSS
   - *Why*: Beautiful, accessible components, highly customizable
   - *Cost*: Free
@@ -124,7 +124,7 @@
 **Solution**: Custom fine-tuned model
 - **Base Model**: YOLOv8 or SegFormer
 - **Training Data**: Mitchell, CCC ONE damage datasets (licensed)
-- **Inference**: 
+- **Inference**:
   - Cloud: AWS Rekognition Custom Labels (~$1/1000 images)
   - Self-hosted: Replicate or Hugging Face Inference Endpoints
 
@@ -158,7 +158,7 @@
 
 #### Primary Database
 **PostgreSQL 15+** (with pgvector extension)
-- *Hosting*: 
+- *Hosting*:
   - Development: Supabase (free tier)
   - Production: AWS RDS, Neon.tech, or Railway
 - *Cost*: $25-100/month depending on scale

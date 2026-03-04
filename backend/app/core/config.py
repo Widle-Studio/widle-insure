@@ -1,12 +1,19 @@
+from typing import List, Optional
+
 from pydantic_settings import BaseSettings
-from typing import Optional
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Widle Insure API"
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost",
+        "http://localhost:3000",
+        "http://localhost:8000",
+    ]
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str # No default value, required from environment
-    API_KEY: str # No default value, required from environment
-    
+    SECRET_KEY: str  # No default value, required from environment
+    API_KEY: str  # No default value, required from environment
+
     POSTGRES_SERVER: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
@@ -22,5 +29,6 @@ class Settings(BaseSettings):
     class Config:
         case_sensitive = True
         env_file = ".env"
+
 
 settings = Settings()

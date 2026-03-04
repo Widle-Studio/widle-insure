@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+
 from app.core.security import get_api_key
 
 router = APIRouter()
+
 
 class PolicyResponse(BaseModel):
     policy_number: str
@@ -15,6 +16,7 @@ class PolicyResponse(BaseModel):
     effective_date: str
     expiration_date: str
 
+
 # Mock Database
 MOCK_POLICIES = {
     "POL-123456789": {
@@ -25,7 +27,7 @@ MOCK_POLICIES = {
         "coverage_limit": 50000.0,
         "deductible": 500.0,
         "effective_date": "2024-01-01",
-        "expiration_date": "2025-01-01"
+        "expiration_date": "2025-01-01",
     },
     "POL-987654321": {
         "policy_number": "POL-987654321",
@@ -35,11 +37,16 @@ MOCK_POLICIES = {
         "coverage_limit": 30000.0,
         "deductible": 1000.0,
         "effective_date": "2023-01-01",
-        "expiration_date": "2024-01-01"
-    }
+        "expiration_date": "2024-01-01",
+    },
 }
 
-@router.get("/{policy_number}", response_model=PolicyResponse, dependencies=[Depends(get_api_key)])
+
+@router.get(
+    "/{policy_number}",
+    response_model=PolicyResponse,
+    dependencies=[Depends(get_api_key)],
+)
 async def get_policy(policy_number: str):
     """
     Mock endpoint to retrieve policy details.

@@ -1,10 +1,12 @@
-import shutil
 import os
+import shutil
 from uuid import uuid4
+
 from fastapi import UploadFile
 from fastapi.concurrency import run_in_threadpool
 
 UPLOAD_DIR = "uploads"
+
 
 class StorageService:
     def __init__(self):
@@ -26,5 +28,6 @@ class StorageService:
         await run_in_threadpool(_save_file)
 
         return file_path
+
 
 storage_service = StorageService()

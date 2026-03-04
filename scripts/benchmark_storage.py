@@ -1,16 +1,17 @@
 import asyncio
 import time
 import os
-import shutil
-import tempfile
 from io import BytesIO
 import sys
 
 # Add backend to path so we can import app
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend')))
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "backend"))
+)
 
 from fastapi import UploadFile
 from app.services.storage import StorageService
+
 
 async def simulate_heartbeat():
     """A task that should run every 10ms. We measure how much it gets delayed."""
@@ -25,7 +26,8 @@ async def simulate_heartbeat():
         if delay > max_delay:
             max_delay = delay
         delays.append(delay)
-    return max_delay, sum(delays)/len(delays)
+    return max_delay, sum(delays) / len(delays)
+
 
 class DummyFile:
     def __init__(self, size):
@@ -36,14 +38,16 @@ class DummyFile:
 
     @property
     def file(self):
-         return self._file
+        return self._file
 
     @property
     def filename(self):
-         return "dummy.txt"
+        return "dummy.txt"
+
 
 async def upload_task(service, file):
     await service.upload_file(file)
+
 
 async def run_benchmark():
     service = StorageService()
@@ -51,7 +55,9 @@ async def run_benchmark():
     # Create a 10MB dummy file
     file_size = 10 * 1024 * 1024
 
-    print(f"Starting benchmark: 20 concurrent uploads of {file_size / 1024 / 1024}MB files...")
+    print(
+        f"Starting benchmark: 20 concurrent uploads of {file_size / 1024 / 1024}MB files..."
+    )
 
     start_time = time.perf_counter()
 
@@ -71,6 +77,7 @@ async def run_benchmark():
     print(f"Total time taken: {total_time:.4f} seconds")
     print(f"Maximum event loop blockage (heartbeat delay): {max_delay:.4f} seconds")
     print(f"Average event loop blockage: {avg_delay:.4f} seconds")
+
 
 if __name__ == "__main__":
     asyncio.run(run_benchmark())

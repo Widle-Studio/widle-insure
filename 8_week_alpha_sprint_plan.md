@@ -384,24 +384,24 @@ Day 5: Integration
 ```python
 def calculate_fraud_score(claim):
     score = 0
-    
+
     # Time delay
     days_delayed = (claim.created_at - claim.incident_date).days
     if days_delayed > 30: score += 20
-    
+
     # Claim amount
     if claim.estimated_damage_cost > 10000: score += 15
-    
+
     # Recent claims
     recent_claims = count_claims_by_policy(claim.policy_number, days=90)
     if recent_claims > 1: score += 25
-    
+
     # AI confidence
     if claim.ai_confidence < 0.7: score += 15
-    
+
     # Location anomaly (check if claimant location matches policy address)
     if not location_matches(claim): score += 25
-    
+
     return min(score, 100)
 ```
 
@@ -469,7 +469,7 @@ import stripe
 
 async def initiate_payout(claim_id: str):
     claim = get_claim(claim_id)
-    
+
     # Create Stripe transfer
     transfer = stripe.Transfer.create(
         amount=int(claim.approved_amount * 100),  # cents
@@ -477,16 +477,16 @@ async def initiate_payout(claim_id: str):
         destination=claim.claimant_stripe_account,
         description=f"Insurance claim payout: {claim.claim_number}"
     )
-    
+
     # Update claim
     claim.payout_id = transfer.id
     claim.payout_status = "initiated"
     claim.payout_date = datetime.now()
     claim.status = "paid"
-    
+
     # Send confirmation email
     send_payout_email(claim)
-    
+
     return transfer
 ```
 

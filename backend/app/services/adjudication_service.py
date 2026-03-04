@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class AdjudicationService:
     """
     Service responsible for determining if a claim can be automatically approved,
@@ -12,10 +13,12 @@ class AdjudicationService:
     # Deterministic Hard Limits
     MAX_AUTO_APPROVE_AMOUNT = 2000.00
     REQUIRED_AI_CONFIDENCE = 0.90
-    MAX_FRAUD_SCORE = 10 # Assuming a scale of 0-100 where 0 is no risk
+    MAX_FRAUD_SCORE = 10  # Assuming a scale of 0-100 where 0 is no risk
 
     @classmethod
-    def evaluate_claim(cls, claim: dict, policy: dict, ai_analysis: dict, fraud_score: int) -> dict:
+    def evaluate_claim(
+        cls, claim: dict, policy: dict, ai_analysis: dict, fraud_score: int
+    ) -> dict:
         """
         Evaluate a claim for auto-approval.
 
@@ -47,12 +50,16 @@ class AdjudicationService:
 
         # 2. Deterministic Rule: Hard Cap on Auto-Approval Amount
         if estimated_cost > cls.MAX_AUTO_APPROVE_AMOUNT:
-            reasons.append(f"Estimated cost (${estimated_cost}) exceeds auto-approval limit (${cls.MAX_AUTO_APPROVE_AMOUNT}).")
+            reasons.append(
+                f"Estimated cost (${estimated_cost}) exceeds auto-approval limit (${cls.MAX_AUTO_APPROVE_AMOUNT})."
+            )
 
         # 3. Deterministic Rule: Fraud Flags
         safe_fraud_score = safe_float(fraud_score)
         if safe_fraud_score > cls.MAX_FRAUD_SCORE:
-            reasons.append(f"Fraud score ({safe_fraud_score}) exceeds acceptable limit ({cls.MAX_FRAUD_SCORE}).")
+            reasons.append(
+                f"Fraud score ({safe_fraud_score}) exceeds acceptable limit ({cls.MAX_FRAUD_SCORE})."
+            )
 
         # 4. Deterministic Rule: AI Red Flags
         # Even if AI confidence is high, explicit red flags must trigger review
@@ -63,20 +70,28 @@ class AdjudicationService:
         # 5. Probabilistic Guardrail: AI Confidence Floor
         ai_confidence = safe_float(ai_analysis.get("confidence"))
         if ai_confidence < cls.REQUIRED_AI_CONFIDENCE:
-            reasons.append(f"AI confidence ({ai_confidence}) is below required threshold ({cls.REQUIRED_AI_CONFIDENCE}).")
+            reasons.append(
+                f"AI confidence ({ai_confidence}) is below required threshold ({cls.REQUIRED_AI_CONFIDENCE})."
+            )
 
         # 6. Deterministic Rule: Coverage Limits
         coverage_limit = safe_float(policy.get("coverage_limit"))
         deductible = safe_float(policy.get("deductible"))
 
         if estimated_cost > (coverage_limit - deductible):
-             reasons.append(f"Estimated cost (${estimated_cost}) exceeds coverage limit minus deductible (${coverage_limit - deductible}).")
+            reasons.append(
+                f"Estimated cost (${estimated_cost}) exceeds coverage limit minus deductible (${coverage_limit - deductible})."
+            )
 
         # Decision Logic
         if reasons:
             return {"status": "Manual Review", "reason": " | ".join(reasons)}
 
         # If all deterministic guardrails pass, approve.
-        return {"status": "Approved", "reason": "Passed all auto-adjudication guardrails."}
+        return {
+            "status": "Approved",
+            "reason": "Passed all auto-adjudication guardrails.",
+        }
+
 
 adjudication_service = AdjudicationService()

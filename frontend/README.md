@@ -22,7 +22,7 @@ Next.js 14+ frontend for the AI-Automated Auto Insurance Claims Platform.
     ```bash
     cp .env.example .env.local
     ```
-    
+
 3.  **Run Development Server**:
     ```bash
     npm run dev
