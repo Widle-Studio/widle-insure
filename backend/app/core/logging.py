@@ -18,7 +18,3 @@ def setup_logging():
     # Set log levels for third-party libraries
     logging.getLogger("uvicorn.access").setLevel(logging.INFO)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-
-    # Example of structured logging setup (if needed in future)
-    # import structlog
-    # ...
