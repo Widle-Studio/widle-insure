@@ -1,10 +1,11 @@
-import unittest
-import sys
 import os
+import sys
+import unittest
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from app.services.adjudication_service import AdjudicationService
+
 
 class TestAdjudicationService(unittest.TestCase):
 

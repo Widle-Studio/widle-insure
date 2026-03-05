@@ -1,9 +1,12 @@
 import asyncio
 import uuid
 from datetime import datetime
-from app.core.database import AsyncSessionLocal, engine
-from app.models.claims import Claim
+
 from sqlalchemy import select
+
+from app.core.database import AsyncSessionLocal
+from app.models.claims import Claim
+
 
 async def seed_data():
     async with AsyncSessionLocal() as session:

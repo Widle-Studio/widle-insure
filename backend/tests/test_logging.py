@@ -1,7 +1,9 @@
 import logging
 import sys
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from app.core.logging import setup_logging
+
 
 def test_setup_logging_configures_basic_config():
     """
