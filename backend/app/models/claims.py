@@ -1,6 +1,3 @@
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, Numeric, Text, JSON, Uuid
-# from sqlalchemy.dialects.postgresql import UUID # Removed for SQLite compatibility
-from app.core.database import Base
 import uuid
 
 from sqlalchemy import (
@@ -17,6 +14,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
+# from sqlalchemy.dialects.postgresql import UUID # Removed for SQLite compatibility
 from app.core.database import Base
 
 

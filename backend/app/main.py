@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.core.config import settings
 from app.core.logging import setup_logging
 
@@ -29,5 +30,6 @@ async def root():
     return {"message": "Welcome to Widle Insure API"}
 
 from app.api.v1.endpoints import claims, policies
+
 app.include_router(claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"])
 app.include_router(policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"])

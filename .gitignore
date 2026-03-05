@@ -123,3 +123,4 @@ sql_app.db
 *.log
 backend.log
 __pycache__
+backend/uploads/*
