@@ -1,8 +1,7 @@
 import pytest
-from httpx import ASGITransport, AsyncClient
-
-from app.core.config import settings
+from httpx import AsyncClient, ASGITransport
 from app.main import app
+from app.core.config import settings
 
 # Only testing the 403 response for unauthorized access and 200 for authorized (where no DB is involved or mocked)
 
@@ -64,7 +63,7 @@ async def test_create_claim_authorized_auth_check_only():
         except OSError:
             # Expected because DB is not running
             pass
-        except Exception:
+        except Exception as e:
             # Any other exception means we got past auth?
             # Actually httpx might raise the exception if the app crashes
             # If the app returns 500, response.status_code will be 500.

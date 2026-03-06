@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from app.core.config import settings
 from app.core.logging import setup_logging
 
@@ -12,13 +11,13 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Configure CORS based on environment settings
+# Set all CORS enabled origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["Content-Type", "Authorization", "Accept", "x-api-key"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/health")
@@ -30,6 +29,5 @@ async def root():
     return {"message": "Welcome to Widle Insure API"}
 
 from app.api.v1.endpoints import claims, policies
-
 app.include_router(claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"])
 app.include_router(policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"])

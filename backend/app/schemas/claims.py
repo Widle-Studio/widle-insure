@@ -1,9 +1,7 @@
-from datetime import datetime
 from typing import List, Optional
-from uuid import UUID
-
 from pydantic import BaseModel
-
+from uuid import UUID
+from datetime import datetime
 
 from pydantic import Field, validator
 import re
@@ -44,7 +42,7 @@ class ClaimPhotoResponse(BaseModel):
     id: UUID
     photo_url: str
     description: Optional[str] = None
-    created_at: datetime
+    uploaded_at: datetime
 
     class Config:
         from_attributes = True
