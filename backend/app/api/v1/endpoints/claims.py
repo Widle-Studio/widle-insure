@@ -19,7 +19,8 @@ async def create_claim(
     """
     Create a new claim.
     """
-    claim_number = f"CLM-{datetime.now().year}-{uuid.uuid4().hex[:6].upper()}"
+    # Format: CLM-YYYY-001234
+    claim_number = f"CLM-{datetime.now().year}-{str(random.randint(0, 999999)).zfill(6)}"
     
     new_claim = Claim(
         policy_number=claim_in.policy_number,
@@ -40,7 +41,14 @@ async def create_claim(
     db.add(new_claim)
     await db.commit()
     await db.refresh(new_claim)
-    return new_claim
+
+    # Needs to fetch relations eagerly since response_model requires it
+    # We'll re-fetch the claim using selectinload to avoid MissingGreenlet
+    stmt = select(Claim).where(Claim.id == new_claim.id).options(selectinload(Claim.photos))
+    result = await db.execute(stmt)
+    new_claim_with_rels = result.scalars().first()
+
+    return new_claim_with_rels
 
 @router.get("/{claim_id}", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
 async def get_claim(
