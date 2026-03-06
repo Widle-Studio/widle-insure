@@ -1,6 +1,7 @@
-import shutil
 import os
 from uuid import uuid4
+
+import aiofiles
 from fastapi import UploadFile
 
 UPLOAD_DIR = "uploads"
@@ -18,8 +19,10 @@ class StorageService:
         file_name = f"{uuid4()}{file_extension}"
         file_path = os.path.join(UPLOAD_DIR, file_name)
 
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        async with aiofiles.open(file_path, "wb") as buffer:
+            # Read in chunks to avoid memory issues with large files
+            while content := await file.read(1024 * 1024):  # 1MB chunks
+                await buffer.write(content)
 
         return file_path
 

@@ -1,16 +1,13 @@
-from typing import Any, List
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
-import random
+
 from app.core.database import get_db
-from app.models.claims import Claim, ClaimPhoto
-from app.schemas.claims import ClaimCreate, ClaimResponse, ClaimPhotoResponse
-from app.services.storage import storage_service
 from app.core.security import get_api_key
-from datetime import datetime
-import uuid
+from app.models.claims import Claim, ClaimPhoto
+from app.schemas.claims import ClaimCreate, ClaimPhotoResponse, ClaimResponse
+from app.services.storage import storage_service
 
 router = APIRouter()
 

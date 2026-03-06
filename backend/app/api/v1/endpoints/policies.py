@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Depends
+
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+
 from app.core.security import get_api_key
 
 router = APIRouter()

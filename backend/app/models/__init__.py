@@ -1,2 +1,3 @@
-from app.core.database import Base
-from app.models.claims import Claim, ClaimPhoto, ClaimAuditLog
+from app.models.claims import Claim, ClaimAuditLog, ClaimPhoto
+
+__all__ = ["Claim", "ClaimPhoto", "ClaimAuditLog"]
