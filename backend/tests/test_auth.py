@@ -32,9 +32,9 @@ async def test_get_policy_authorized():
     transport = ASGITransport(app=app)
     headers = {"x-api-key": settings.API_KEY}
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
-        response = await ac.get(f"{settings.API_V1_STR}/policies/POL-123456789", headers=headers)
+        response = await ac.get(f"{settings.API_V1_STR}/policies/POL-12345", headers=headers)
     assert response.status_code == 200
-    assert response.json()["policy_number"] == "POL-123456789"
+    assert response.json()["policy_number"] == "POL-12345"
 
 @pytest.mark.asyncio
 async def test_create_claim_authorized_auth_check_only():
