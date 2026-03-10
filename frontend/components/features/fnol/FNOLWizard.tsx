@@ -34,7 +34,7 @@ export function FNOLWizard() {
     // ... (rest of form setup)
 
     const form = useForm<FNOLFormData>({
-        mode: "onChange", // Validate on change for better UX in wizard
+        mode: "onBlur", // Validate on blur to reduce re-renders during typing
         // resolver: zodResolver(schema) // Add schema later
     });
 
