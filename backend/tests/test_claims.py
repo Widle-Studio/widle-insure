@@ -14,7 +14,7 @@ def valid_claim_payload():
         "incident_date": "2024-01-01T12:00:00",
         "incident_location": "New York, NY",
         "incident_description": "Fender bender at intersection",
-        "vehicle_vin": "1HGCM82633A004",
+        "vehicle_vin": "1HGCM82633A004123",
         "vehicle_make": "Honda",
         "vehicle_model": "Accord",
         "vehicle_year": 2022,
@@ -64,6 +64,19 @@ async def test_create_claim_success(valid_claim_payload: dict):
         def add(self, item):
             self.added.append(item)
 
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(self):
+                    class MockScalars:
+                        def first(self):
+                            return self.item
+                        def __init__(self, item):
+                            self.item = item
+                    return MockScalars(self.item)
+                def __init__(self, item):
+                    self.item = item
+            return MockResult(self.added[0] if self.added else None)
+
         async def commit(self):
             pass
 
@@ -102,3 +115,46 @@ async def test_create_claim_success(valid_claim_payload: dict):
     db_claim = mock_db.added[0]
     assert db_claim.policy_number == valid_claim_payload["policy_number"]
     assert db_claim.status == "New"
+
+@pytest.mark.asyncio
+async def test_upload_claim_photo_invalid_content():
+    from app.core.database import get_db
+    import uuid
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    test_claim_id = uuid.uuid4()
+
+    # Create dummy text file disguised as jpg
+    files = {"file": ("malicious.jpg", b"<?php echo 'malicious'; ?>", "image/jpeg")}
+
+    # Mock DB so claim exists
+    class MockDbSession:
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(self):
+                    class MockScalars:
+                        def first(self):
+                            from app.models.claims import Claim
+                            claim = Claim()
+                            claim.id = test_claim_id
+                            return claim
+                    return MockScalars()
+            return MockResult()
+
+    mock_db = MockDbSession()
+    async def override_get_db():
+        yield mock_db
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            f"{settings.API_V1_STR}/claims/{test_claim_id}/photos",
+            files=files,
+            headers=auth_headers
+        )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 400
+    assert "Invalid file type: text/x-php" in response.json()["detail"]
