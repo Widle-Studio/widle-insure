@@ -1,8 +1,13 @@
+import os
+import random
 import uuid
+from datetime import datetime
 from typing import Any
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import get_api_key
@@ -11,6 +16,10 @@ from app.schemas.claims import ClaimCreate, ClaimPhotoResponse, ClaimResponse
 from app.services.storage import storage_service
 
 router = APIRouter()
+
+# Security constants for file uploads
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 @router.post("/", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
 async def create_claim(
@@ -76,6 +85,21 @@ async def upload_claim_photo(
     """
     Upload a photo for a claim.
     """
+    # 1. Validate File Type
+    if file.content_type not in ALLOWED_MIME_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type: {file.content_type}. Allowed types: {', '.join(ALLOWED_MIME_TYPES)}"
+        )
+
+    # 2. Validate File Extension
+    _, ext = os.path.splitext(file.filename or "")
+    if ext.lower() not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file extension: {ext}. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+
     # Check if claim exists
     result = await db.execute(select(Claim).where(Claim.id == claim_id))
     claim = result.scalars().first()
