@@ -107,6 +107,28 @@ class TestAdjudicationService(unittest.TestCase):
         self.assertEqual(result["status"], "Manual Review")
         self.assertIn("exceeds coverage limit minus deductible", result["reason"])
 
+    def test_auto_approve_exact_boundaries(self):
+        # Claim with values exactly at the boundary of acceptable limits
+        claim = self.valid_claim.copy()
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT
+
+        policy = self.valid_policy.copy()
+        policy["coverage_limit"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT
+        policy["deductible"] = 0.0
+
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE
+
+        fraud_score = AdjudicationService.MAX_FRAUD_SCORE
+
+        result = AdjudicationService.evaluate_claim(
+            claim,
+            policy,
+            ai_analysis,
+            fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
     def test_handles_explicit_none_values(self):
         # Even if values are explicit None, the service should not crash
         claim = { "estimated_damage_cost": None }
