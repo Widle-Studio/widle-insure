@@ -14,7 +14,7 @@ def valid_claim_payload():
         "incident_date": "2024-01-01T12:00:00",
         "incident_location": "New York, NY",
         "incident_description": "Fender bender at intersection",
-        "vehicle_vin": "1HGCM82633A004",
+        "vehicle_vin": "1HGCM82633A004123",
         "vehicle_make": "Honda",
         "vehicle_model": "Accord",
         "vehicle_year": 2022,
@@ -72,6 +72,15 @@ async def test_create_claim_success(valid_claim_payload: dict):
             item.created_at = datetime.now(timezone.utc)
             item.updated_at = datetime.now(timezone.utc)
             pass
+
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(inner_self):
+                    class MockScalars:
+                        def first(self2):
+                            return self.added[0]
+                    return MockScalars()
+            return MockResult()
 
     mock_db = MockDbSession()
 

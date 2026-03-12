@@ -1,5 +1,5 @@
 import os
-import random
+import secrets
 import uuid
 from datetime import datetime
 from typing import Any
@@ -30,7 +30,7 @@ async def create_claim(
     Create a new claim.
     """
     # Format: CLM-YYYY-001234
-    claim_number = f"CLM-{datetime.now().year}-{str(random.randint(0, 999999)).zfill(6)}"
+    claim_number = f"CLM-{datetime.now().year}-{str(secrets.randbelow(1000000)).zfill(6)}"
     
     new_claim = Claim(
         policy_number=claim_in.policy_number,
