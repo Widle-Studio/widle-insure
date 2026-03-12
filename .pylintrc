@@ -4,29 +4,16 @@ ignore-paths=
 
 [MESSAGES CONTROL]
 disable=
-    C0114, # missing-module-docstring
-    C0115, # missing-class-docstring
-    C0116, # missing-function-docstring
-    C0301, # line-too-long
-    C0303, # trailing-whitespace
-    C0411, # wrong-import-order
-    C0412, # ungrouped-imports
-    C0413, # wrong-import-position
-    C0415, # import-outside-toplevel
-    R0903, # too-few-public-methods
-    W0621, # redefined-outer-name
-    C0103, # invalid-name
-    E0213, # no-self-argument
-    E1102, # not-callable
+    C, # disable all convention messages
+    R, # disable all refactoring messages
     W0613, # unused-argument
     W0611, # unused-import
-    W0311, # bad-indentation
-    R1705, # no-else-return
-    R1731, # consider-using-max-builtin
-    W0718, # broad-exception-caught
+    W0621, # redefined-outer-name
     W0612, # unused-variable
     W0404, # reimported
-    W0107  # unnecessary-pass
+    W0718, # broad-exception-caught
+    E1102, # not-callable for func.now
+    E0213, # no-self-argument for pydantic validators
 
 [TYPECHECK]
 ignored-modules=alembic.context,alembic.op
