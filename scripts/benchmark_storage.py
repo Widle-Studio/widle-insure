@@ -1,3 +1,4 @@
+"""Storage benchmarking script."""
 import asyncio
 import time
 import os
@@ -7,6 +8,7 @@ import sys
 # Add backend to path so we can import app
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend')))
 
+# pylint: disable=wrong-import-position,import-error
 from fastapi import UploadFile
 from app.services.storage import StorageService
 
@@ -20,30 +22,36 @@ async def simulate_heartbeat():
         await asyncio.sleep(0.01)
         # Calculate how long the task was delayed beyond the sleep duration.
         delay = (time.perf_counter() - start) - 0.01
-        if delay > max_delay:
-            max_delay = delay
+        max_delay = max(max_delay, delay)
         delays.append(delay)
     return max_delay, sum(delays)/len(delays)
 
 class DummyFile:
+    """A dummy file for testing purposes."""
     def __init__(self, size):
+        """Initializes the dummy file with a specified size."""
         self._file = BytesIO(b"x" * size)
 
     def read(self, *args, **kwargs):
+        """Reads data from the dummy file."""
         return self._file.read(*args, **kwargs)
 
     @property
     def file(self):
-         return self._file
+        """Returns the underlying BytesIO file object."""
+        return self._file
 
     @property
     def filename(self):
-         return "dummy.txt"
+        """Returns the dummy file name."""
+        return "dummy.txt"
 
 async def upload_task(service, file):
+    """A task that uploads a single file using the given service."""
     await service.upload_file(file)
 
 async def run_benchmark():
+    """Runs the file storage benchmark test."""
     service = StorageService()
 
     # Create a 10MB dummy file
