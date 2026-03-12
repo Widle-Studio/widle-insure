@@ -1,10 +1,12 @@
-import re
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel
 
+
+from pydantic import Field, validator
+import re
 
 class ClaimBase(BaseModel):
     policy_number: str = Field(..., min_length=1, max_length=50)

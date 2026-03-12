@@ -6,8 +6,8 @@ from typing import Any
 
 import magic
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
@@ -140,11 +140,11 @@ async def upload_claim_photo(
     db.add(new_photo)
     try:
         await db.commit()
-    except IntegrityError:
+    except IntegrityError as exc:
         await db.rollback()
         # Clean up the orphaned file
         await storage_service.delete_file(file_path)
-        raise HTTPException(status_code=404, detail="Claim not found")
+        raise HTTPException(status_code=404, detail="Claim not found") from exc
 
     await db.refresh(new_photo)
 
