@@ -20,19 +20,20 @@ def valid_claim_payload():
         "vehicle_year": 2022,
         "claimant_name": "John Doe",
         "claimant_email": "john.doe@example.com",
-        "claimant_phone": "555-0123"
+        "claimant_phone": "555-0123",
     }
+
 
 @pytest.mark.asyncio
 async def test_create_claim_unauthorized(valid_claim_payload: dict):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
-            f"{settings.API_V1_STR}/claims/",
-            json=valid_claim_payload
+            f"{settings.API_V1_STR}/claims/", json=valid_claim_payload
         )
 
     assert response.status_code == 403
+
 
 @pytest.mark.asyncio
 async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
@@ -43,12 +44,11 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
-            f"{settings.API_V1_STR}/claims/",
-            json=invalid_payload,
-            headers=auth_headers
+            f"{settings.API_V1_STR}/claims/", json=invalid_payload, headers=auth_headers
         )
 
     assert response.status_code == 422
+
 
 @pytest.mark.asyncio
 async def test_create_claim_success(valid_claim_payload: dict):
@@ -79,7 +79,9 @@ async def test_create_claim_success(valid_claim_payload: dict):
                     class MockScalars:
                         def first(self2):
                             return self.added[0]
+
                     return MockScalars()
+
             return MockResult()
 
     mock_db = MockDbSession()
@@ -94,7 +96,7 @@ async def test_create_claim_success(valid_claim_payload: dict):
         response = await client.post(
             f"{settings.API_V1_STR}/claims/",
             json=valid_claim_payload,
-            headers=auth_headers
+            headers=auth_headers,
         )
 
     app.dependency_overrides.clear()
@@ -111,3 +113,26 @@ async def test_create_claim_success(valid_claim_payload: dict):
     db_claim = mock_db.added[0]
     assert db_claim.policy_number == valid_claim_payload["policy_number"]
     assert db_claim.status == "New"
+
+
+@pytest.mark.asyncio
+async def test_upload_claim_photo_invalid_content_type():
+    auth_headers = {"x-api-key": settings.API_KEY}
+
+    # We create a fake text file with a .jpg extension
+    fake_file_content = b"This is just a text file, not an image."
+
+    files = {"file": ("fake_image.jpg", fake_file_content, "image/jpeg")}
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # The endpoint expects /claims/{claim_id}/photos
+        claim_id = "123e4567-e89b-12d3-a456-426614174000"
+        response = await client.post(
+            f"{settings.API_V1_STR}/claims/{claim_id}/photos",
+            files=files,
+            headers=auth_headers,
+        )
+
+    assert response.status_code == 400
+    assert "Invalid file content type" in response.json()["detail"]
