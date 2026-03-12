@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
 from app.main import app
+from app.core.database import get_db
 
 
 @pytest.fixture
@@ -50,13 +52,8 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
     assert response.status_code == 422
 
 
-from unittest.mock import patch
-
-
 @pytest.mark.asyncio
 async def test_create_claim_success(valid_claim_payload: dict):
-    from app.core.database import get_db
-
     auth_headers = {"x-api-key": settings.API_KEY}
 
     # Mocking the database session instead of spinning up sqlite+aiosqlite which hangs
@@ -120,8 +117,6 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
 @pytest.mark.asyncio
 async def test_create_claim_secure_randomness(valid_claim_payload: dict):
-    from app.core.database import get_db
-
     auth_headers = {"x-api-key": settings.API_KEY}
 
     class MockDbSession:
@@ -160,7 +155,9 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
     transport = ASGITransport(app=app)
 
     # We patch secrets.randbelow to ensure it is the function used for randomness
-    with patch("app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456) as mock_randbelow:
+    with patch(
+        "app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456
+    ) as mock_randbelow:
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 f"{settings.API_V1_STR}/claims/",
