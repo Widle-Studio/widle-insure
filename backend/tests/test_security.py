@@ -5,6 +5,7 @@ Tests for security and API key validation functions.
 import pytest
 from fastapi import HTTPException
 
+# pylint: disable=import-error
 from app.core.security import get_api_key
 from app.core.config import settings
 
