@@ -28,6 +28,17 @@ async def test_get_api_key_error_paths(invalid_api_key):
     assert exc_info.value.detail == "Could not validate credentials"
 
 @pytest.mark.asyncio
+async def test_get_api_key_invalid_input():
+    """
+    Directly test that get_api_key with invalid input raises a 403 Forbidden HTTPException.
+    """
+    with pytest.raises(HTTPException) as exc_info:
+        await get_api_key(api_key="invalid_input")
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Could not validate credentials"
+
+@pytest.mark.asyncio
 async def test_get_api_key_same_length_invalid():
     """
     Test that an invalid API key of the exact same length as the valid one
