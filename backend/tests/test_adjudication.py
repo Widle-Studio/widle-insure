@@ -226,7 +226,10 @@ class TestAdjudicationService(unittest.TestCase):
 
     def test_boundary_max_fraud_score(self):
         result = AdjudicationService.evaluate_claim(
-            self.valid_claim, self.valid_policy, self.valid_ai_analysis, AdjudicationService.MAX_FRAUD_SCORE
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            AdjudicationService.MAX_FRAUD_SCORE
         )
         self.assertEqual(result["status"], "Approved")
 
@@ -248,7 +251,10 @@ class TestAdjudicationService(unittest.TestCase):
 
     def test_fraud_score_just_below_boundary(self):
         result = AdjudicationService.evaluate_claim(
-            self.valid_claim, self.valid_policy, self.valid_ai_analysis, AdjudicationService.MAX_FRAUD_SCORE - 1
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            AdjudicationService.MAX_FRAUD_SCORE - 1
         )
         self.assertEqual(result["status"], "Approved")
 
