@@ -91,15 +91,16 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post(
-            f"{settings.API_V1_STR}/claims/",
-            json=valid_claim_payload,
-            headers=auth_headers,
-        )
-
-    app.dependency_overrides.clear()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                f"{settings.API_V1_STR}/claims/",
+                json=valid_claim_payload,
+                headers=auth_headers,
+            )
+    finally:
+        app.dependency_overrides.clear()
 
     assert response.status_code == 200
     data = response.json()
@@ -136,3 +137,140 @@ async def test_upload_claim_photo_invalid_content_type():
 
     assert response.status_code == 400
     assert "Invalid file content type" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_upload_claim_photo_invalid_file_extension():
+    auth_headers = {"x-api-key": settings.API_KEY}
+
+    # valid jpeg bytes
+    valid_jpeg_content = b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00"
+
+    # Give it an invalid extension .pdf
+    files = {"file": ("fake_image.pdf", valid_jpeg_content, "image/jpeg")}
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        claim_id = "123e4567-e89b-12d3-a456-426614174000"
+        response = await client.post(
+            f"{settings.API_V1_STR}/claims/{claim_id}/photos",
+            files=files,
+            headers=auth_headers,
+        )
+
+    assert response.status_code == 400
+    assert "Invalid file extension" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_upload_claim_photo_claim_not_found():
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    valid_jpeg_content = b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00"
+    files = {"file": ("real_image.jpg", valid_jpeg_content, "image/jpeg")}
+
+    class MockDbSession:
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(inner_self):
+                    class MockScalars:
+                        def first(self2):
+                            return None
+                    return MockScalars()
+            return MockResult()
+
+    mock_db = MockDbSession()
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            claim_id = "123e4567-e89b-12d3-a456-426614174000"
+            response = await client.post(
+                f"{settings.API_V1_STR}/claims/{claim_id}/photos",
+                files=files,
+                headers=auth_headers,
+            )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    assert "Claim not found" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_upload_claim_photo_success():
+    from unittest.mock import AsyncMock, patch
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    valid_jpeg_content = b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x01\x00H\x00H\x00\x00"
+    files = {"file": ("real_image.jpg", valid_jpeg_content, "image/jpeg")}
+
+    class DummyClaim:
+        id = "123e4567-e89b-12d3-a456-426614174000"
+
+    class MockDbSession:
+        def __init__(self):
+            self.added = []
+
+        def add(self, item):
+            self.added.append(item)
+
+        async def commit(self):
+            pass
+
+        async def refresh(self, item):
+            item.id = "550e8400-e29b-41d4-a716-446655440000"
+            item.created_at = datetime.now(timezone.utc)
+            item.updated_at = datetime.now(timezone.utc)
+
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(inner_self):
+                    class MockScalars:
+                        def first(self2):
+                            return DummyClaim()
+                    return MockScalars()
+            return MockResult()
+
+    mock_db = MockDbSession()
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    try:
+        with patch("app.api.v1.endpoints.claims.storage_service.upload_file", new_callable=AsyncMock) as mock_upload_file:
+            mock_upload_file.return_value = "/mock/path/real_image.jpg"
+
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                claim_id = "123e4567-e89b-12d3-a456-426614174000"
+                response = await client.post(
+                    f"{settings.API_V1_STR}/claims/{claim_id}/photos",
+                    files=files,
+                    headers=auth_headers,
+                )
+    finally:
+        app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == "550e8400-e29b-41d4-a716-446655440000"
+    assert data["photo_url"] == "/mock/path/real_image.jpg"
+    assert "description" in data
+
+    # Verify db interaction
+    import uuid
+    assert len(mock_db.added) == 1
+    added_photo = mock_db.added[0]
+    assert added_photo.claim_id == uuid.UUID("123e4567-e89b-12d3-a456-426614174000")
+    assert added_photo.photo_url == "/mock/path/real_image.jpg"
+    assert added_photo.photo_type == "image/jpeg"
