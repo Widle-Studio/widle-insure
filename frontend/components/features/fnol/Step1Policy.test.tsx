@@ -65,4 +65,9 @@ describe('Step1Policy', () => {
         expect(screen.getByText('Email is required')).toBeInTheDocument();
         expect(screen.getByText('Phone is required')).toBeInTheDocument();
     });
+
+    it('renders the card header correctly', () => {
+        render(<Step1Policy form={getMockForm()} />);
+        expect(screen.getByText('Claimant & Policy Information')).toBeInTheDocument();
+    });
 });
