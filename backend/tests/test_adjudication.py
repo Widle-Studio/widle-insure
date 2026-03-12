@@ -156,5 +156,57 @@ class TestAdjudicationService(unittest.TestCase):
         self.assertEqual(result2["status"], "Manual Review")
         self.assertIn("AI confidence (0.0)", result2["reason"])
 
+    def test_safe_float_invalid_types(self):
+        # Testing TypeError (list) and ValueError (invalid string)
+        claim = { "estimated_damage_cost": [] }
+        policy = self.valid_policy.copy()
+        ai_analysis = { "confidence": "invalid_string", "red_flags": [] }
+        fraud_score = {}
+
+        result = AdjudicationService.evaluate_claim(
+            claim,
+            policy,
+            ai_analysis,
+            fraud_score
+        )
+        self.assertEqual(result["status"], "Manual Review")
+        self.assertIn("AI confidence (0.0) is below required threshold", result["reason"])
+
+    def test_review_cost_barely_exceeds(self):
+        claim = self.valid_claim.copy()
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT + 0.01
+
+        result = AdjudicationService.evaluate_claim(
+            claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Manual Review")
+        self.assertIn("exceeds auto-approval limit", result["reason"])
+
+    def test_review_confidence_barely_below(self):
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE - 0.001
+
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            ai_analysis,
+            self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Manual Review")
+        self.assertIn("is below required threshold", result["reason"])
+
+    def test_review_fraud_score_barely_exceeds(self):
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            AdjudicationService.MAX_FRAUD_SCORE + 0.01
+        )
+        self.assertEqual(result["status"], "Manual Review")
+        self.assertIn("exceeds acceptable limit", result["reason"])
+
 if __name__ == '__main__':
     unittest.main()
