@@ -208,5 +208,39 @@ class TestAdjudicationService(unittest.TestCase):
         self.assertEqual(result["status"], "Manual Review")
         self.assertIn("exceeds acceptable limit", result["reason"])
 
+    def test_exact_2000_cost(self):
+        claim = self.valid_claim.copy()
+        claim["estimated_damage_cost"] = 2000.00
+
+        result = AdjudicationService.evaluate_claim(
+            claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_exact_090_confidence(self):
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = 0.90
+
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            ai_analysis,
+            self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_exact_10_fraud_score(self):
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            10
+        )
+        self.assertEqual(result["status"], "Approved")
+
+
 if __name__ == '__main__':
     unittest.main()
