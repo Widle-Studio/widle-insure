@@ -24,3 +24,11 @@ async def test_get_api_key_missing():
 async def test_get_api_key_valid():
     result = await get_api_key(api_key=settings.API_KEY)
     assert result == settings.API_KEY
+
+@pytest.mark.asyncio
+async def test_get_api_key_empty():
+    with pytest.raises(HTTPException) as exc_info:
+        await get_api_key(api_key="")
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Could not validate credentials"
