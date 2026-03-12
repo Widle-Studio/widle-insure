@@ -1,3 +1,7 @@
+"""
+Unit tests for the adjudication service.
+"""
+# pylint: disable=wrong-import-position,import-error,missing-function-docstring
 import os
 import sys
 import unittest
@@ -8,6 +12,9 @@ from app.services.adjudication_service import AdjudicationService
 
 
 class TestAdjudicationService(unittest.TestCase):
+    """
+    Test suite for AdjudicationService.
+    """
 
     def setUp(self):
         self.valid_policy = {
