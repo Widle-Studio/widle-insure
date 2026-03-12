@@ -74,11 +74,12 @@ async def test_create_claim_success(valid_claim_payload: dict):
             pass
 
         async def execute(self, stmt):
+            outer_self = self
             class MockResult:
-                def scalars(inner_self):
+                def scalars(self):
                     class MockScalars:
-                        def first(self2):
-                            return self.added[0]
+                        def first(self):
+                            return outer_self.added[0]
 
                     return MockScalars()
 
@@ -135,11 +136,12 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
             item.updated_at = datetime.now(timezone.utc)
 
         async def execute(self, stmt):
+            outer_self = self
             class MockResult:
-                def scalars(inner_self):
+                def scalars(self):
                     class MockScalars:
-                        def first(self2):
-                            return self.added[0]
+                        def first(self):
+                            return outer_self.added[0]
 
                     return MockScalars()
 
