@@ -28,6 +28,17 @@ async def test_get_api_key_error_paths(invalid_api_key):
     assert exc_info.value.detail == "Could not validate credentials"
 
 @pytest.mark.asyncio
+async def test_get_api_key_invalid_input():
+    """
+    Directly testing get_api_key with invalid input is a very short and simple test case.
+    """
+    with pytest.raises(HTTPException) as exc_info:
+        await get_api_key(api_key="clearly_invalid_key_123")
+
+    assert exc_info.value.status_code == 403
+    assert exc_info.value.detail == "Could not validate credentials"
+
+@pytest.mark.asyncio
 async def test_get_api_key_valid():
     """
     Test that a valid API key is correctly returned.
