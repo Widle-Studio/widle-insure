@@ -57,6 +57,20 @@ async def test_create_claim_success(valid_claim_payload: dict):
     auth_headers = {"x-api-key": settings.API_KEY}
 
     # Mocking the database session instead of spinning up sqlite+aiosqlite which hangs
+    class MockScalars:
+        def __init__(self, added):
+            self.added = added
+
+        def first(self):
+            return self.added[0]
+
+    class MockResult:
+        def __init__(self, added):
+            self.added = added
+
+        def scalars(self):
+            return MockScalars(self.added)
+
     class MockDbSession:
         def __init__(self):
             self.added = []
@@ -71,19 +85,9 @@ async def test_create_claim_success(valid_claim_payload: dict):
             item.id = "123e4567-e89b-12d3-a456-426614174000"
             item.created_at = datetime.now(timezone.utc)
             item.updated_at = datetime.now(timezone.utc)
-            pass
 
-        async def execute(self, stmt):
-            outer_self = self
-            class MockResult:
-                def scalars(self):
-                    class MockScalars:
-                        def first(self):
-                            return outer_self.added[0]
-
-                    return MockScalars()
-
-            return MockResult()
+        async def execute(self, stmt):  # pylint: disable=unused-argument
+            return MockResult(self.added)
 
     mock_db = MockDbSession()
 
@@ -120,6 +124,20 @@ async def test_create_claim_success(valid_claim_payload: dict):
 async def test_create_claim_secure_randomness(valid_claim_payload: dict):
     auth_headers = {"x-api-key": settings.API_KEY}
 
+    class MockScalars:
+        def __init__(self, added):
+            self.added = added
+
+        def first(self):
+            return self.added[0]
+
+    class MockResult:
+        def __init__(self, added):
+            self.added = added
+
+        def scalars(self):
+            return MockScalars(self.added)
+
     class MockDbSession:
         def __init__(self):
             self.added = []
@@ -135,17 +153,8 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
             item.created_at = datetime.now(timezone.utc)
             item.updated_at = datetime.now(timezone.utc)
 
-        async def execute(self, stmt):
-            outer_self = self
-            class MockResult:
-                def scalars(self):
-                    class MockScalars:
-                        def first(self):
-                            return outer_self.added[0]
-
-                    return MockScalars()
-
-            return MockResult()
+        async def execute(self, stmt):  # pylint: disable=unused-argument
+            return MockResult(self.added)
 
     mock_db = MockDbSession()
 
