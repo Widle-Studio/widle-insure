@@ -116,6 +116,72 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
+async def test_create_claim_unique_and_secure_claim_number(valid_claim_payload: dict):
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+
+    class MockDbSession:
+        def __init__(self):
+            self.added = []
+
+        def add(self, item):
+            self.added.append(item)
+
+        async def commit(self):
+            pass
+
+        async def refresh(self, item):
+            item.id = "123e4567-e89b-12d3-a456-426614174000"
+            item.created_at = datetime.now(timezone.utc)
+            item.updated_at = datetime.now(timezone.utc)
+            pass
+
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(inner_self):
+                    class MockScalars:
+                        def first(self2):
+                            return self.added[-1] if self.added else None
+                    return MockScalars()
+            return MockResult()
+
+    mock_db = MockDbSession()
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    claim_numbers = set()
+
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        for _ in range(5):
+            response = await client.post(
+                f"{settings.API_V1_STR}/claims/",
+                json=valid_claim_payload,
+                headers=auth_headers,
+            )
+            assert response.status_code == 200
+            data = response.json()
+            claim_number = data["claim_number"]
+
+            # Verify the exact format CLM-YYYY-XXXXXX
+            parts = claim_number.split("-")
+            assert len(parts) == 3
+            assert parts[0] == "CLM"
+            assert len(parts[1]) == 4 and parts[1].isdigit()
+            assert len(parts[2]) == 6 and parts[2].isdigit()
+
+            claim_numbers.add(claim_number)
+
+    app.dependency_overrides.clear()
+
+    # Ensure all 5 generated claim numbers are unique
+    assert len(claim_numbers) == 5
+
+@pytest.mark.asyncio
 async def test_upload_claim_photo_invalid_content_type():
     auth_headers = {"x-api-key": settings.API_KEY}
 
