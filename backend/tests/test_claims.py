@@ -50,6 +50,9 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
     assert response.status_code == 422
 
 
+from unittest.mock import patch
+
+
 @pytest.mark.asyncio
 async def test_create_claim_success(valid_claim_payload: dict):
     from app.core.database import get_db
@@ -113,6 +116,65 @@ async def test_create_claim_success(valid_claim_payload: dict):
     db_claim = mock_db.added[0]
     assert db_claim.policy_number == valid_claim_payload["policy_number"]
     assert db_claim.status == "New"
+
+
+@pytest.mark.asyncio
+async def test_create_claim_secure_randomness(valid_claim_payload: dict):
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+
+    class MockDbSession:
+        def __init__(self):
+            self.added = []
+
+        def add(self, item):
+            self.added.append(item)
+
+        async def commit(self):
+            pass
+
+        async def refresh(self, item):
+            item.id = "123e4567-e89b-12d3-a456-426614174000"
+            item.created_at = datetime.now(timezone.utc)
+            item.updated_at = datetime.now(timezone.utc)
+
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(inner_self):
+                    class MockScalars:
+                        def first(self2):
+                            return self.added[0]
+
+                    return MockScalars()
+
+            return MockResult()
+
+    mock_db = MockDbSession()
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+
+    # We patch secrets.randbelow to ensure it is the function used for randomness
+    with patch("app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456) as mock_randbelow:
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                f"{settings.API_V1_STR}/claims/",
+                json=valid_claim_payload,
+                headers=auth_headers,
+            )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    mock_randbelow.assert_called_once_with(1000000)
+
+    data = response.json()
+    assert "123456" in data["claim_number"]
 
 
 @pytest.mark.asyncio
