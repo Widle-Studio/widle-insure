@@ -1,3 +1,7 @@
+"""
+Tests for security and API key validation functions.
+"""
+
 import pytest
 from fastapi import HTTPException
 
