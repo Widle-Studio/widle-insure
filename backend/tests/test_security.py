@@ -72,7 +72,11 @@ async def test_get_api_key_partial_match():
     """
     Test that a partially matching API key (e.g. prefix) raises 403.
     """
-    partial_key = settings.API_KEY[:-1] if settings.API_KEY and len(settings.API_KEY) > 1 else "partial"
+    partial_key = (
+        settings.API_KEY[:-1]
+        if settings.API_KEY and len(settings.API_KEY) > 1
+        else "partial"
+    )
     with pytest.raises(HTTPException) as exc_info:
         await get_api_key(api_key=partial_key)
 
