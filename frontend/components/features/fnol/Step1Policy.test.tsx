@@ -70,4 +70,18 @@ describe('Step1Policy', () => {
         render(<Step1Policy form={getMockForm()} />);
         expect(screen.getByText('Claimant & Policy Information')).toBeInTheDocument();
     });
+
+    it('has correct input types and accessibility attributes', () => {
+        render(<Step1Policy form={getMockForm()} />);
+
+        // Email input should have type="email"
+        const emailInput = screen.getByLabelText('Email');
+        expect(emailInput).toHaveAttribute('type', 'email');
+        expect(emailInput).toHaveAttribute('id', 'claimant_email');
+
+        // Other inputs should have appropriate ids
+        expect(screen.getByLabelText('Policy Number')).toHaveAttribute('id', 'policy_number');
+        expect(screen.getByLabelText('Full Name')).toHaveAttribute('id', 'claimant_name');
+        expect(screen.getByLabelText('Phone')).toHaveAttribute('id', 'claimant_phone');
+    });
 });
