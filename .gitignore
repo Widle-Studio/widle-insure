@@ -126,3 +126,4 @@ sql_app.db
 backend.log
 __pycache__
 backend/uploads/*
+uploads/
