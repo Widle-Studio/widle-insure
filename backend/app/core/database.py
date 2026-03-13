@@ -5,7 +5,7 @@ from app.core.config import settings
 
 engine = create_async_engine(
     settings.SQLALCHEMY_DATABASE_URI,
-    echo=settings.DEBUG,  # Security: Disable SQL logging in production
+    echo=False,
     future=True
 )
 
