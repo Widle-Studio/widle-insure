@@ -22,7 +22,7 @@ class ClaimBase(BaseModel):
     claimant_phone: str = Field(..., min_length=1, max_length=20)
 
     @validator("vehicle_vin")
-    def validate_vin(cls, v):
+    def validate_vin(cls, v):  # pylint: disable=no-self-argument
         if v is not None:
             # Basic VIN validation: alphanumeric, 17 chars, no I, O, Q
             if not re.match(r"^[A-HJ-NPR-Z0-9]{17}$", v.upper()):
@@ -31,7 +31,7 @@ class ClaimBase(BaseModel):
         return v
 
     @validator("incident_date")
-    def validate_incident_date(cls, v):
+    def validate_incident_date(cls, v):  # pylint: disable=no-self-argument
         now = datetime.now(v.tzinfo)
         if v > now:
             raise ValueError("Incident date cannot be in the future")

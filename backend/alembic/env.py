@@ -1,13 +1,13 @@
 import asyncio
 import os
 import sys
-from logging.config import fileConfig
+from logging.config import fileConfig  # pylint: disable=import-error,no-name-in-module
 
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import pool  # pylint: disable=import-error
+from sqlalchemy.engine import Connection  # pylint: disable=import-error
+from sqlalchemy.ext.asyncio import async_engine_from_config  # pylint: disable=import-error
 
-from alembic import context
+from alembic import context  # pylint: disable=no-name-in-module
 
 # Add backend directory to path so we can import app modules
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
@@ -16,7 +16,7 @@ from app.core.database import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
-config = context.config
+config = context.config  # pylint: disable=no-member
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
@@ -50,22 +50,22 @@ def run_migrations_offline() -> None:
 
     """
     url = config.get_main_option("sqlalchemy.url")
-    context.configure(
+    context.configure(  # pylint: disable=no-member
         url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
 
-    with context.begin_transaction():
-        context.run_migrations()
+    with context.begin_transaction():  # pylint: disable=no-member
+        context.run_migrations()  # pylint: disable=no-member
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(connection=connection, target_metadata=target_metadata)  # pylint: disable=no-member
 
-    with context.begin_transaction():
-        context.run_migrations()
+    with context.begin_transaction():  # pylint: disable=no-member
+        context.run_migrations()  # pylint: disable=no-member
 
 
 async def run_async_migrations() -> None:
@@ -92,7 +92,7 @@ def run_migrations_online() -> None:
     asyncio.run(run_async_migrations())
 
 
-if context.is_offline_mode():
+if context.is_offline_mode():  # pylint: disable=no-member
     run_migrations_offline()
 else:
     run_migrations_online()

@@ -10,8 +10,8 @@ def test_setup_logging_configures_basic_config():
     Test that setup_logging configures basicConfig correctly and sets
     the expected format and handlers.
     """
-    with patch("app.core.logging.std_logging.basicConfig") as mock_basic_config, \
-         patch("app.core.logging.std_logging.getLogger") as mock_get_logger:
+    with patch("app.core.logging.logging.basicConfig") as mock_basic_config, \
+         patch("app.core.logging.logging.getLogger") as mock_get_logger:
 
         setup_logging()
 
@@ -20,20 +20,20 @@ def test_setup_logging_configures_basic_config():
         mock_basic_config.assert_called_once()
         call_kwargs = mock_basic_config.call_args.kwargs
 
-        assert call_kwargs["level"] == logging.INFO
+        assert call_kwargs["level"] == logging.INFO  # pylint: disable=no-member
         assert call_kwargs["format"] == log_format
         assert len(call_kwargs["handlers"]) == 1
 
         handler = call_kwargs["handlers"][0]
-        assert isinstance(handler, logging.StreamHandler)
+        assert isinstance(handler, logging.StreamHandler)  # pylint: disable=no-member
         assert handler.stream == sys.stdout
 
 def test_setup_logging_configures_third_party_loggers():
     """
     Test that setup_logging configures specific levels for third-party loggers.
     """
-    with patch("app.core.logging.std_logging.basicConfig"), \
-         patch("app.core.logging.std_logging.getLogger") as mock_get_logger:
+    with patch("app.core.logging.logging.basicConfig"), \
+         patch("app.core.logging.logging.getLogger") as mock_get_logger:
 
         # We need to mock the loggers returned by getLogger so we can check setLevel
         uvicorn_logger_mock = MagicMock()
@@ -51,5 +51,5 @@ def test_setup_logging_configures_third_party_loggers():
         setup_logging()
 
         # Verify setLevel was called with correct levels
-        uvicorn_logger_mock.setLevel.assert_called_once_with(logging.INFO)
-        sqlalchemy_logger_mock.setLevel.assert_called_once_with(logging.WARNING)
+        uvicorn_logger_mock.setLevel.assert_called_once_with(logging.INFO)  # pylint: disable=no-member
+        sqlalchemy_logger_mock.setLevel.assert_called_once_with(logging.WARNING)  # pylint: disable=no-member

@@ -74,12 +74,11 @@ async def test_create_claim_success(valid_claim_payload: dict):
             pass
 
         async def execute(self, stmt):
-            outer_self = self
             class MockResult:
-                def scalars(self):
+                def scalars(inner_self):  # pylint: disable=no-self-argument
                     class MockScalars:
-                        def first(self):
-                            return outer_self.added[0]
+                        def first(self2):  # pylint: disable=no-self-argument
+                            return self.added[0]
 
                     return MockScalars()
 
