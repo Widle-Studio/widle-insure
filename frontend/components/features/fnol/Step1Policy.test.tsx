@@ -70,4 +70,21 @@ describe('Step1Policy', () => {
         render(<Step1Policy form={getMockForm()} />);
         expect(screen.getByText('Claimant & Policy Information')).toBeInTheDocument();
     });
+
+    it('renders the email input with the correct type attribute', () => {
+        render(<Step1Policy form={getMockForm()} />);
+        const emailInput = screen.getByLabelText('Email');
+        expect(emailInput).toHaveAttribute('type', 'email');
+    });
+
+    it('renders correctly without errors object properties', () => {
+        const { container } = render(<Step1Policy form={getMockForm({})} />);
+        expect(container).toBeInTheDocument();
+
+        // No error messages should be displayed
+        expect(screen.queryByText('Policy number is required')).not.toBeInTheDocument();
+        expect(screen.queryByText('Name is required')).not.toBeInTheDocument();
+        expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
+        expect(screen.queryByText('Phone is required')).not.toBeInTheDocument();
+    });
 });
