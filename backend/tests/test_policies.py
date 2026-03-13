@@ -63,3 +63,20 @@ def test_get_policy(policy_number, req_headers, expected_status, expected_respon
     response = client.get(f"{settings.API_V1_STR}/policies/{policy_number}", headers=req_headers)
     assert response.status_code == expected_status
     assert response.json() == expected_response
+
+def test_get_policy_explicit():
+    """
+    Explicit test for get_policy endpoint as requested, fetching POL-987654321
+    and asserting the exact fields returned.
+    """
+    response = client.get(f"{settings.API_V1_STR}/policies/POL-987654321", headers=headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert data["policy_number"] == "POL-987654321"
+    assert data["holder_name"] == "Jane Smith"
+    assert data["status"] == "Expired"
+    assert data["vehicle_info"] == "2019 Honda Civic"
+    assert data["coverage_limit"] == 30000.0
+    assert data["deductible"] == 1000.0
+    assert data["effective_date"] == "2023-01-01"
+    assert data["expiration_date"] == "2024-01-01"

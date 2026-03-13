@@ -1,4 +1,4 @@
-import logging
+import logging as std_logging
 import sys
 
 
@@ -7,14 +7,14 @@ def setup_logging():
     Configure logging for the application.
     """
     log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    logging.basicConfig(
-        level=logging.INFO,
+    std_logging.basicConfig(
+        level=std_logging.INFO,
         format=log_format,
         handlers=[
-            logging.StreamHandler(sys.stdout)
+            std_logging.StreamHandler(sys.stdout)
         ]
     )
     
     # Set log levels for third-party libraries
-    logging.getLogger("uvicorn.access").setLevel(logging.INFO)
-    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
+    std_logging.getLogger("uvicorn.access").setLevel(std_logging.INFO)
+    std_logging.getLogger("sqlalchemy.engine").setLevel(std_logging.WARNING)

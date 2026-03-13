@@ -10,8 +10,8 @@ def test_setup_logging_configures_basic_config():
     Test that setup_logging configures basicConfig correctly and sets
     the expected format and handlers.
     """
-    with patch("app.core.logging.logging.basicConfig") as mock_basic_config, \
-         patch("app.core.logging.logging.getLogger") as mock_get_logger:
+    with patch("app.core.logging.std_logging.basicConfig") as mock_basic_config, \
+         patch("app.core.logging.std_logging.getLogger") as mock_get_logger:
 
         setup_logging()
 
@@ -32,8 +32,8 @@ def test_setup_logging_configures_third_party_loggers():
     """
     Test that setup_logging configures specific levels for third-party loggers.
     """
-    with patch("app.core.logging.logging.basicConfig"), \
-         patch("app.core.logging.logging.getLogger") as mock_get_logger:
+    with patch("app.core.logging.std_logging.basicConfig"), \
+         patch("app.core.logging.std_logging.getLogger") as mock_get_logger:
 
         # We need to mock the loggers returned by getLogger so we can check setLevel
         uvicorn_logger_mock = MagicMock()
