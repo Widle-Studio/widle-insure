@@ -116,7 +116,7 @@ async def upload_claim_photo(
             detail=f"Invalid file content type: {actual_mime_type}. Allowed types: {', '.join(ALLOWED_MIME_TYPES)}",
         )
 
-    # 2. Validate File Extension
+    # 2. Validate File Extension (Strict enforcement to prevent unrestricted file upload)
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename missing")
 
@@ -124,7 +124,7 @@ async def upload_claim_photo(
     if ext.lower() not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file extension: {ext}. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}",
+            detail=f"Security Policy Violation: Invalid file extension: {ext}. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}",
         )
 
     # Save file
