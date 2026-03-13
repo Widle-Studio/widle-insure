@@ -106,6 +106,20 @@ async def test_create_claim_success(valid_claim_payload: dict):
         async def execute(self, stmt):  # pylint: disable=unused-argument
             return MockResult(self.added)
 
+        async def execute(self, stmt):
+            class MockResult:
+                def __init__(self, item):
+                    self.item = item
+                def scalars(self):
+                    class MockScalars:
+                        def __init__(self, it):
+                            self.it = it
+                        def first(self):
+                            self.it.photos = []
+                            return self.it
+                    return MockScalars(self.item)
+            return MockResult(self.added[0])
+
     mock_db = MockDbSession()
 
     async def override_get_db():
