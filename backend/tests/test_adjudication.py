@@ -1,3 +1,7 @@
+"""
+Unit tests for the adjudication service.
+"""
+# pylint: disable=wrong-import-position,import-error,missing-function-docstring
 import os
 import sys
 import unittest
@@ -8,6 +12,9 @@ from app.services.adjudication_service import AdjudicationService
 
 
 class TestAdjudicationService(unittest.TestCase):
+    """
+    Test suite for AdjudicationService.
+    """
 
     def setUp(self):
         self.valid_policy = {
@@ -208,9 +215,60 @@ class TestAdjudicationService(unittest.TestCase):
         self.assertEqual(result["status"], "Manual Review")
         self.assertIn("exceeds acceptable limit", result["reason"])
 
-    def test_exact_2000_cost(self):
+    def test_boundary_max_auto_approve_amount(self):
         claim = self.valid_claim.copy()
-        claim["estimated_damage_cost"] = 2000.00
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT
+        result = AdjudicationService.evaluate_claim(
+            claim, self.valid_policy, self.valid_ai_analysis, self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_boundary_required_ai_confidence(self):
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim, self.valid_policy, ai_analysis, self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_boundary_max_fraud_score(self):
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            AdjudicationService.MAX_FRAUD_SCORE
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_cost_just_below_boundary(self):
+        claim = self.valid_claim.copy()
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT - 0.01
+        result = AdjudicationService.evaluate_claim(
+            claim, self.valid_policy, self.valid_ai_analysis, self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_confidence_just_above_boundary(self):
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE + 0.01
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim, self.valid_policy, ai_analysis, self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_fraud_score_just_below_boundary(self):
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            AdjudicationService.MAX_FRAUD_SCORE - 1
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_boundary_max_auto_approve_amount(self):
+        claim = self.valid_claim.copy()
+        # Test exact $2000 cost boundary (MAX_AUTO_APPROVE_AMOUNT)
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT
 
         result = AdjudicationService.evaluate_claim(
             claim,
@@ -220,9 +278,10 @@ class TestAdjudicationService(unittest.TestCase):
         )
         self.assertEqual(result["status"], "Approved")
 
-    def test_exact_090_confidence(self):
+    def test_boundary_required_ai_confidence(self):
         ai_analysis = self.valid_ai_analysis.copy()
-        ai_analysis["confidence"] = 0.90
+        # Test exact 0.90 AI confidence boundary (REQUIRED_AI_CONFIDENCE)
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE
 
         result = AdjudicationService.evaluate_claim(
             self.valid_claim,
@@ -232,12 +291,13 @@ class TestAdjudicationService(unittest.TestCase):
         )
         self.assertEqual(result["status"], "Approved")
 
-    def test_exact_10_fraud_score(self):
+    def test_boundary_max_fraud_score(self):
+        # Test exact 10 fraud score boundary (MAX_FRAUD_SCORE)
         result = AdjudicationService.evaluate_claim(
             self.valid_claim,
             self.valid_policy,
             self.valid_ai_analysis,
-            10
+            AdjudicationService.MAX_FRAUD_SCORE
         )
         self.assertEqual(result["status"], "Approved")
 
