@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 from unittest.mock import patch
 
@@ -54,6 +55,9 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
 
 @pytest.mark.asyncio
 async def test_create_claim_success(valid_claim_payload: dict):
+    # pylint: disable=import-outside-toplevel
+    from app.core.database import get_db
+
     auth_headers = {"x-api-key": settings.API_KEY}
 
     # Mocking the database session instead of spinning up sqlite+aiosqlite which hangs
@@ -86,6 +90,19 @@ async def test_create_claim_success(valid_claim_payload: dict):
             item.created_at = datetime.now(timezone.utc)
             item.updated_at = datetime.now(timezone.utc)
 
+        async def execute(self, stmt):
+            outer_self = self
+            class MockResult:
+                def scalars(self):
+                    class MockScalars:
+                        def first(self):
+                            # In test_create_claim_randomness, we add claims to self.added in a loop
+                            # We need to return the last added claim because it's the one we just processed
+                            return outer_self.added[-1] if outer_self.added else None
+
+                    return MockScalars()
+
+            return MockResult()
         async def execute(self, stmt):  # pylint: disable=unused-argument
             return MockResult(self.added)
 
@@ -122,6 +139,12 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
+async def test_create_claim_randomness(valid_claim_payload: dict):
+    # pylint: disable=import-outside-toplevel
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+
 async def test_create_claim_secure_randomness(valid_claim_payload: dict):
     auth_headers = {"x-api-key": settings.API_KEY}
 
@@ -153,6 +176,19 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
             item.id = "123e4567-e89b-12d3-a456-426614174000"
             item.created_at = datetime.now(timezone.utc)
             item.updated_at = datetime.now(timezone.utc)
+            pass
+
+        async def execute(self, stmt):
+            outer_self = self
+            class MockResult:
+                def scalars(self):
+                    class MockScalars:
+                        def first(self):
+                            return outer_self.added[-1] if outer_self.added else None
+
+                    return MockScalars()
+
+            return MockResult()
 
         async def execute(self, stmt):  # pylint: disable=unused-argument
             return MockResult(self.added)
@@ -166,6 +202,10 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
 
     transport = ASGITransport(app=app)
 
+    # Generate 10 claims and ensure their claim numbers are unique and correctly formatted
+    claim_numbers = set()
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        for _ in range(10):
     # We patch secrets.randbelow to ensure it is the function used for randomness
     with patch(
         "app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456
@@ -176,6 +216,18 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
                 json=valid_claim_payload,
                 headers=auth_headers,
             )
+            assert response.status_code == 200
+            data = response.json()
+            claim_number = data["claim_number"]
+
+            # Verify format: CLM-YYYY-XXXXXX
+            assert re.match(r"^CLM-\d{4}-\d{6}$", claim_number)
+            claim_numbers.add(claim_number)
+
+    app.dependency_overrides.clear()
+
+    # Ensure no duplicates were generated
+    assert len(claim_numbers) == 10
 
     app.dependency_overrides.clear()
 
