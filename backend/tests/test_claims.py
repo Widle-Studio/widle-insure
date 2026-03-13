@@ -96,15 +96,16 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post(
-            f"{settings.API_V1_STR}/claims/",
-            json=valid_claim_payload,
-            headers=auth_headers,
-        )
-
-    app.dependency_overrides.clear()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                f"{settings.API_V1_STR}/claims/",
+                json=valid_claim_payload,
+                headers=auth_headers,
+            )
+    finally:
+        app.dependency_overrides.clear()
 
     assert response.status_code == 200
     data = response.json()
