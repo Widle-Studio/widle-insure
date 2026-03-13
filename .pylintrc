@@ -1,0 +1,19 @@
+[MASTER]
+ignore-paths=
+    ^backend/alembic/.*$
+
+[MESSAGES CONTROL]
+disable=
+    C, # disable all convention messages
+    R, # disable all refactoring messages
+    W0613, # unused-argument
+    W0611, # unused-import
+    W0621, # redefined-outer-name
+    W0612, # unused-variable
+    W0404, # reimported
+    W0718, # broad-exception-caught
+    E1102, # not-callable for func.now
+    E0213, # no-self-argument for pydantic validators
+
+[TYPECHECK]
+ignored-modules=alembic.context,alembic.op

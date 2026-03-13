@@ -6,6 +6,7 @@ from typing import Any
 
 import magic
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -126,12 +127,6 @@ async def upload_claim_photo(
             detail=f"Invalid file extension: {ext}. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}",
         )
 
-    # Check if claim exists
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
-    claim = result.scalars().first()
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found")
-
     # Save file
     file_path = await storage_service.upload_file(file)
 
@@ -143,7 +138,14 @@ async def upload_claim_photo(
     )
 
     db.add(new_photo)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        # Clean up the orphaned file
+        await storage_service.delete_file(file_path)
+        raise HTTPException(status_code=404, detail="Claim not found") from exc
+
     await db.refresh(new_photo)
 
     return new_photo

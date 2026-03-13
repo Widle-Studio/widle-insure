@@ -1,11 +1,13 @@
 import re
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
 from app.main import app
+from app.core.database import get_db
 
 
 @pytest.fixture
@@ -59,6 +61,20 @@ async def test_create_claim_success(valid_claim_payload: dict):
     auth_headers = {"x-api-key": settings.API_KEY}
 
     # Mocking the database session instead of spinning up sqlite+aiosqlite which hangs
+    class MockScalars:
+        def __init__(self, added):
+            self.added = added
+
+        def first(self):
+            return self.added[0]
+
+    class MockResult:
+        def __init__(self, added):
+            self.added = added
+
+        def scalars(self):
+            return MockScalars(self.added)
+
     class MockDbSession:
         def __init__(self):
             self.added = []
@@ -73,7 +89,6 @@ async def test_create_claim_success(valid_claim_payload: dict):
             item.id = "123e4567-e89b-12d3-a456-426614174000"
             item.created_at = datetime.now(timezone.utc)
             item.updated_at = datetime.now(timezone.utc)
-            pass
 
         async def execute(self, stmt):
             outer_self = self
@@ -88,6 +103,8 @@ async def test_create_claim_success(valid_claim_payload: dict):
                     return MockScalars()
 
             return MockResult()
+        async def execute(self, stmt):  # pylint: disable=unused-argument
+            return MockResult(self.added)
 
     mock_db = MockDbSession()
 
@@ -96,15 +113,16 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
     app.dependency_overrides[get_db] = override_get_db
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post(
-            f"{settings.API_V1_STR}/claims/",
-            json=valid_claim_payload,
-            headers=auth_headers,
-        )
-
-    app.dependency_overrides.clear()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                f"{settings.API_V1_STR}/claims/",
+                json=valid_claim_payload,
+                headers=auth_headers,
+            )
+    finally:
+        app.dependency_overrides.clear()
 
     assert response.status_code == 200
     data = response.json()
@@ -127,6 +145,23 @@ async def test_create_claim_randomness(valid_claim_payload: dict):
 
     auth_headers = {"x-api-key": settings.API_KEY}
 
+async def test_create_claim_secure_randomness(valid_claim_payload: dict):
+    auth_headers = {"x-api-key": settings.API_KEY}
+
+    class MockScalars:
+        def __init__(self, added):
+            self.added = added
+
+        def first(self):
+            return self.added[0]
+
+    class MockResult:
+        def __init__(self, added):
+            self.added = added
+
+        def scalars(self):
+            return MockScalars(self.added)
+
     class MockDbSession:
         def __init__(self):
             self.added = []
@@ -155,6 +190,9 @@ async def test_create_claim_randomness(valid_claim_payload: dict):
 
             return MockResult()
 
+        async def execute(self, stmt):  # pylint: disable=unused-argument
+            return MockResult(self.added)
+
     mock_db = MockDbSession()
 
     async def override_get_db():
@@ -168,6 +206,11 @@ async def test_create_claim_randomness(valid_claim_payload: dict):
     claim_numbers = set()
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         for _ in range(10):
+    # We patch secrets.randbelow to ensure it is the function used for randomness
+    with patch(
+        "app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456
+    ) as mock_randbelow:
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 f"{settings.API_V1_STR}/claims/",
                 json=valid_claim_payload,
@@ -185,6 +228,14 @@ async def test_create_claim_randomness(valid_claim_payload: dict):
 
     # Ensure no duplicates were generated
     assert len(claim_numbers) == 10
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    mock_randbelow.assert_called_once_with(1000000)
+
+    data = response.json()
+    assert "123456" in data["claim_number"]
 
 
 @pytest.mark.asyncio
@@ -208,3 +259,106 @@ async def test_upload_claim_photo_invalid_content_type():
 
     assert response.status_code == 400
     assert "Invalid file content type" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_get_claim_success(valid_claim_payload: dict):
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    claim_id = "123e4567-e89b-12d3-a456-426614174000"
+
+    class MockClaim:
+        def __init__(self):
+            self.id = claim_id
+            self.policy_number = valid_claim_payload["policy_number"]
+            self.incident_date = datetime.fromisoformat(valid_claim_payload["incident_date"]).replace(tzinfo=timezone.utc)
+            self.incident_location = valid_claim_payload["incident_location"]
+            self.incident_description = valid_claim_payload["incident_description"]
+            self.vehicle_vin = valid_claim_payload["vehicle_vin"]
+            self.vehicle_make = valid_claim_payload["vehicle_make"]
+            self.vehicle_model = valid_claim_payload["vehicle_model"]
+            self.vehicle_year = valid_claim_payload["vehicle_year"]
+            self.claimant_name = valid_claim_payload["claimant_name"]
+            self.claimant_email = valid_claim_payload["claimant_email"]
+            self.claimant_phone = valid_claim_payload["claimant_phone"]
+            self.status = "New"
+            self.claim_number = "CLM-2024-001234"
+            self.created_at = datetime.now(timezone.utc)
+            self.updated_at = datetime.now(timezone.utc)
+            self.photos = []
+
+    mock_claim = MockClaim()
+
+    class MockDbSession:
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(inner_self):
+                    class MockScalars:
+                        def first(self2):
+                            return mock_claim
+
+                    return MockScalars()
+
+            return MockResult()
+
+    mock_db = MockDbSession()
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get(
+            f"{settings.API_V1_STR}/claims/{claim_id}",
+            headers=auth_headers,
+        )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == claim_id
+    assert data["policy_number"] == mock_claim.policy_number
+    assert data["claim_number"] == mock_claim.claim_number
+
+
+@pytest.mark.asyncio
+async def test_get_claim_not_found():
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    claim_id = "123e4567-e89b-12d3-a456-426614174000"
+
+    class MockDbSession:
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(inner_self):
+                    class MockScalars:
+                        def first(self2):
+                            return None
+
+                    return MockScalars()
+
+            return MockResult()
+
+    mock_db = MockDbSession()
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get(
+            f"{settings.API_V1_STR}/claims/{claim_id}",
+            headers=auth_headers,
+        )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Claim not found"
