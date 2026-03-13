@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 
 import pytest
@@ -52,6 +53,7 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
 
 @pytest.mark.asyncio
 async def test_create_claim_success(valid_claim_payload: dict):
+    # pylint: disable=import-outside-toplevel
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
@@ -74,13 +76,14 @@ async def test_create_claim_success(valid_claim_payload: dict):
             pass
 
         async def execute(self, stmt):
+            outer_self = self
             class MockResult:
-                def scalars(inner_self):
+                def scalars(self):
                     class MockScalars:
-                        def first(self2):
+                        def first(self):
                             # In test_create_claim_randomness, we add claims to self.added in a loop
                             # We need to return the last added claim because it's the one we just processed
-                            return self.added[-1] if self.added else None
+                            return outer_self.added[-1] if outer_self.added else None
 
                     return MockScalars()
 
@@ -119,8 +122,8 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
 @pytest.mark.asyncio
 async def test_create_claim_randomness(valid_claim_payload: dict):
+    # pylint: disable=import-outside-toplevel
     from app.core.database import get_db
-    import re
 
     auth_headers = {"x-api-key": settings.API_KEY}
 
@@ -141,11 +144,12 @@ async def test_create_claim_randomness(valid_claim_payload: dict):
             pass
 
         async def execute(self, stmt):
+            outer_self = self
             class MockResult:
-                def scalars(inner_self):
+                def scalars(self):
                     class MockScalars:
-                        def first(self2):
-                            return self.added[-1] if self.added else None
+                        def first(self):
+                            return outer_self.added[-1] if outer_self.added else None
 
                     return MockScalars()
 
