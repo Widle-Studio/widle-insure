@@ -26,4 +26,11 @@ class StorageService:
 
         return file_path
 
+    async def delete_file(self, file_path: str) -> None:
+        """
+        Deletes a file from local disk.
+        """
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
 storage_service = StorageService()
