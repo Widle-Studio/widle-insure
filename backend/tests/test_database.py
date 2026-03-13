@@ -1,6 +1,4 @@
-import pytest
 from app.core.database import engine
-from app.core.config import settings
 
 def test_database_engine_logging_disabled():
     """
