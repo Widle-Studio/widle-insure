@@ -90,35 +90,19 @@ async def test_create_claim_success(valid_claim_payload: dict):
             item.created_at = datetime.now(timezone.utc)
             item.updated_at = datetime.now(timezone.utc)
 
-        async def execute(self, stmt):
-            outer_self = self
-            class MockResult:
-                def scalars(self):
-                    class MockScalars:
-                        def first(self):
-                            # In test_create_claim_randomness, we add claims to self.added in a loop
-                            # We need to return the last added claim because it's the one we just processed
-                            return outer_self.added[-1] if outer_self.added else None
-
-                    return MockScalars()
-
-            return MockResult()
         async def execute(self, stmt):  # pylint: disable=unused-argument
-            return MockResult(self.added)
-
-        async def execute(self, stmt):
-            class MockResult:
+            class MockResultAsync:
                 def __init__(self, item):
                     self.item = item
                 def scalars(self):
-                    class MockScalars:
+                    class MockScalarsAsync:
                         def __init__(self, it):
                             self.it = it
                         def first(self):
                             self.it.photos = []
                             return self.it
-                    return MockScalars(self.item)
-            return MockResult(self.added[0])
+                    return MockScalarsAsync(self.item)
+            return MockResultAsync(self.added[0])
 
     mock_db = MockDbSession()
 
@@ -153,13 +137,9 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
-async def test_create_claim_randomness(valid_claim_payload: dict):
-    # pylint: disable=import-outside-toplevel
+async def test_create_claim_secure_randomness(valid_claim_payload: dict):
     from app.core.database import get_db
 
-    auth_headers = {"x-api-key": settings.API_KEY}
-
-async def test_create_claim_secure_randomness(valid_claim_payload: dict):
     auth_headers = {"x-api-key": settings.API_KEY}
 
     class MockScalars:
@@ -167,7 +147,7 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
             self.added = added
 
         def first(self):
-            return self.added[0]
+            return self.added[-1] if self.added else None
 
     class MockResult:
         def __init__(self, added):
@@ -190,21 +170,8 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
             item.id = "123e4567-e89b-12d3-a456-426614174000"
             item.created_at = datetime.now(timezone.utc)
             item.updated_at = datetime.now(timezone.utc)
-            pass
 
         async def execute(self, stmt):
-            outer_self = self
-            class MockResult:
-                def scalars(self):
-                    class MockScalars:
-                        def first(self):
-                            return outer_self.added[-1] if outer_self.added else None
-
-                    return MockScalars()
-
-            return MockResult()
-
-        async def execute(self, stmt):  # pylint: disable=unused-argument
             return MockResult(self.added)
 
     mock_db = MockDbSession()
@@ -216,40 +183,24 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict):
 
     transport = ASGITransport(app=app)
 
-    # Generate 10 claims and ensure their claim numbers are unique and correctly formatted
-    claim_numbers = set()
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        for _ in range(10):
-    # We patch secrets.randbelow to ensure it is the function used for randomness
-    with patch(
-        "app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456
-    ) as mock_randbelow:
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.post(
-                f"{settings.API_V1_STR}/claims/",
-                json=valid_claim_payload,
-                headers=auth_headers,
-            )
-            assert response.status_code == 200
-            data = response.json()
-            claim_number = data["claim_number"]
+    try:
+        with patch(
+            "app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456
+        ) as mock_randbelow:
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.post(
+                    f"{settings.API_V1_STR}/claims/",
+                    json=valid_claim_payload,
+                    headers=auth_headers,
+                )
+                assert response.status_code == 200
+                data = response.json()
+                claim_number = data["claim_number"]
 
-            # Verify format: CLM-YYYY-XXXXXX
-            assert re.match(r"^CLM-\d{4}-\d{6}$", claim_number)
-            claim_numbers.add(claim_number)
-
-    app.dependency_overrides.clear()
-
-    # Ensure no duplicates were generated
-    assert len(claim_numbers) == 10
-
-    app.dependency_overrides.clear()
-
-    assert response.status_code == 200
-    mock_randbelow.assert_called_once_with(1000000)
-
-    data = response.json()
-    assert "123456" in data["claim_number"]
+                assert "123456" in claim_number
+                mock_randbelow.assert_called_once_with(1000000)
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
@@ -307,9 +258,9 @@ async def test_get_claim_success(valid_claim_payload: dict):
     class MockDbSession:
         async def execute(self, stmt):
             class MockResult:
-                def scalars(inner_self):
+                def scalars(self):
                     class MockScalars:
-                        def first(self2):
+                        def first(self):
                             return mock_claim
 
                     return MockScalars()
@@ -349,9 +300,9 @@ async def test_get_claim_not_found():
     class MockDbSession:
         async def execute(self, stmt):
             class MockResult:
-                def scalars(inner_self):
+                def scalars(self):
                     class MockScalars:
-                        def first(self2):
+                        def first(self):
                             return None
 
                     return MockScalars()
