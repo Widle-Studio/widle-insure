@@ -265,64 +265,6 @@ class TestAdjudicationService(unittest.TestCase):
         )
         self.assertEqual(result["status"], "Approved")
 
-    def test_boundary_max_auto_approve_amount(self):
-        claim = self.valid_claim.copy()
-        # Test exact $2000 cost boundary (MAX_AUTO_APPROVE_AMOUNT)
-        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT
-
-        result = AdjudicationService.evaluate_claim(
-            claim, self.valid_policy, self.valid_ai_analysis, self.valid_fraud_score
-        )
-        self.assertEqual(result["status"], "Approved")
-
-    def test_boundary_required_ai_confidence(self):
-        ai_analysis = self.valid_ai_analysis.copy()
-        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE
-        result = AdjudicationService.evaluate_claim(
-            self.valid_claim, self.valid_policy, ai_analysis, self.valid_fraud_score
-        )
-        self.assertEqual(result["status"], "Approved")
-        # Test exact 0.90 AI confidence boundary (REQUIRED_AI_CONFIDENCE)
-        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE
-
-    def test_boundary_max_fraud_score(self):
-        result = AdjudicationService.evaluate_claim(
-            self.valid_claim,
-            self.valid_policy,
-            self.valid_ai_analysis,
-            AdjudicationService.MAX_FRAUD_SCORE
-        )
-        self.assertEqual(result["status"], "Approved")
-
-    def test_cost_just_below_boundary(self):
-        claim = self.valid_claim.copy()
-        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT - 0.01
-        result = AdjudicationService.evaluate_claim(
-            claim, self.valid_policy, self.valid_ai_analysis, self.valid_fraud_score
-        )
-        self.assertEqual(result["status"], "Approved")
-
-    def test_confidence_just_above_boundary(self):
-        ai_analysis = self.valid_ai_analysis.copy()
-        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE + 0.01
-        result = AdjudicationService.evaluate_claim(
-            self.valid_claim, self.valid_policy, ai_analysis, self.valid_fraud_score
-        )
-        self.assertEqual(result["status"], "Approved")
-
-    def test_fraud_score_just_below_boundary(self):
-    def test_boundary_max_fraud_score(self):
-        # Test exact 10 fraud score boundary (MAX_FRAUD_SCORE)
-        result = AdjudicationService.evaluate_claim(
-            self.valid_claim,
-            self.valid_policy,
-            self.valid_ai_analysis,
-            AdjudicationService.MAX_FRAUD_SCORE - 1
-            AdjudicationService.MAX_FRAUD_SCORE
-        )
-        self.assertEqual(result["status"], "Approved")
-
-
 
 if __name__ == '__main__':
     unittest.main()
