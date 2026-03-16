@@ -1,3 +1,7 @@
+"""
+Unit tests for the adjudication service.
+"""
+# pylint: disable=wrong-import-position,import-error,missing-function-docstring
 import os
 import sys
 import unittest
@@ -8,6 +12,9 @@ from app.services.adjudication_service import AdjudicationService
 
 
 class TestAdjudicationService(unittest.TestCase):
+    """
+    Test suite for AdjudicationService.
+    """
 
     def setUp(self):
         self.valid_policy = {
@@ -107,6 +114,28 @@ class TestAdjudicationService(unittest.TestCase):
         self.assertEqual(result["status"], "Manual Review")
         self.assertIn("exceeds coverage limit minus deductible", result["reason"])
 
+    def test_auto_approve_exact_boundaries(self):
+        # Claim with values exactly at the boundary of acceptable limits
+        claim = self.valid_claim.copy()
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT
+
+        policy = self.valid_policy.copy()
+        policy["coverage_limit"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT
+        policy["deductible"] = 0.0
+
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE
+
+        fraud_score = AdjudicationService.MAX_FRAUD_SCORE
+
+        result = AdjudicationService.evaluate_claim(
+            claim,
+            policy,
+            ai_analysis,
+            fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
     def test_handles_explicit_none_values(self):
         # Even if values are explicit None, the service should not crash
         claim = { "estimated_damage_cost": None }
@@ -133,6 +162,109 @@ class TestAdjudicationService(unittest.TestCase):
         )
         self.assertEqual(result2["status"], "Manual Review")
         self.assertIn("AI confidence (0.0)", result2["reason"])
+
+    def test_safe_float_invalid_types(self):
+        # Testing TypeError (list) and ValueError (invalid string)
+        claim = { "estimated_damage_cost": [] }
+        policy = self.valid_policy.copy()
+        ai_analysis = { "confidence": "invalid_string", "red_flags": [] }
+        fraud_score = {}
+
+        result = AdjudicationService.evaluate_claim(
+            claim,
+            policy,
+            ai_analysis,
+            fraud_score
+        )
+        self.assertEqual(result["status"], "Manual Review")
+        self.assertIn("AI confidence (0.0) is below required threshold", result["reason"])
+
+    def test_review_cost_barely_exceeds(self):
+        claim = self.valid_claim.copy()
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT + 0.01
+
+        result = AdjudicationService.evaluate_claim(
+            claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Manual Review")
+        self.assertIn("exceeds auto-approval limit", result["reason"])
+
+    def test_review_confidence_barely_below(self):
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE - 0.001
+
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            ai_analysis,
+            self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Manual Review")
+        self.assertIn("is below required threshold", result["reason"])
+
+    def test_review_fraud_score_barely_exceeds(self):
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            AdjudicationService.MAX_FRAUD_SCORE + 0.01
+        )
+        self.assertEqual(result["status"], "Manual Review")
+        self.assertIn("exceeds acceptable limit", result["reason"])
+
+    def test_boundary_max_auto_approve_amount(self):
+        claim = self.valid_claim.copy()
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT
+        result = AdjudicationService.evaluate_claim(
+            claim, self.valid_policy, self.valid_ai_analysis, self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_boundary_required_ai_confidence(self):
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim, self.valid_policy, ai_analysis, self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_boundary_max_fraud_score(self):
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            AdjudicationService.MAX_FRAUD_SCORE
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_cost_just_below_boundary(self):
+        claim = self.valid_claim.copy()
+        claim["estimated_damage_cost"] = AdjudicationService.MAX_AUTO_APPROVE_AMOUNT - 0.01
+        result = AdjudicationService.evaluate_claim(
+            claim, self.valid_policy, self.valid_ai_analysis, self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_confidence_just_above_boundary(self):
+        ai_analysis = self.valid_ai_analysis.copy()
+        ai_analysis["confidence"] = AdjudicationService.REQUIRED_AI_CONFIDENCE + 0.01
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim, self.valid_policy, ai_analysis, self.valid_fraud_score
+        )
+        self.assertEqual(result["status"], "Approved")
+
+    def test_fraud_score_just_below_boundary(self):
+        result = AdjudicationService.evaluate_claim(
+            self.valid_claim,
+            self.valid_policy,
+            self.valid_ai_analysis,
+            AdjudicationService.MAX_FRAUD_SCORE - 1
+        )
+        self.assertEqual(result["status"], "Approved")
+
 
 if __name__ == '__main__':
     unittest.main()
