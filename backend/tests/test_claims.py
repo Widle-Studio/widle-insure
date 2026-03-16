@@ -82,6 +82,19 @@ async def test_create_claim_success(valid_claim_payload: dict):
         def add(self, item):
             self.added.append(item)
 
+        async def execute(self, stmt):
+            class MockResult:
+                def scalars(self):
+                    class MockScalars:
+                        def first(self):
+                            return self.item
+                        def __init__(self, item):
+                            self.item = item
+                    return MockScalars(self.item)
+                def __init__(self, item):
+                    self.item = item
+            return MockResult(self.added[0] if self.added else None)
+
         async def commit(self):
             pass
 

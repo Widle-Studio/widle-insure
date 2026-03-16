@@ -1,6 +1,7 @@
 import os
 import secrets
 import uuid
+import magic
 from datetime import datetime
 from typing import Any
 
@@ -98,8 +99,12 @@ async def upload_claim_photo(
     """
     Upload a photo for a claim.
     """
-    # 1. Validate File Type
-    if file.content_type not in ALLOWED_MIME_TYPES:
+    # 1. Validate File Content Type via magic bytes
+    file_content = await file.read(2048)
+    actual_mime_type = magic.from_buffer(file_content, mime=True)
+    await file.seek(0)
+
+    if actual_mime_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
             status_code=400,
             detail=f"Invalid file type: {file.content_type}. Allowed types: {', '.join(ALLOWED_MIME_TYPES)}",
