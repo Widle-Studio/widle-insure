@@ -5,7 +5,7 @@ from uuid import UUID
 from pydantic import BaseModel
 
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator, ConfigDict
 import re
 
 class ClaimBase(BaseModel):
@@ -21,8 +21,9 @@ class ClaimBase(BaseModel):
     claimant_email: str = Field(..., pattern=r"^\S+@\S+\.\S+$")
     claimant_phone: str = Field(..., min_length=1, max_length=20)
 
-    @validator("vehicle_vin")
-    def validate_vin(cls, v):
+    @field_validator("vehicle_vin")
+    @classmethod
+    def validate_vin(cls, v: Optional[str]) -> Optional[str]:
         if v is not None:
             # Basic VIN validation: alphanumeric, 17 chars, no I, O, Q
             if not re.match(r"^[A-HJ-NPR-Z0-9]{17}$", v.upper()):
@@ -30,8 +31,9 @@ class ClaimBase(BaseModel):
             return v.upper()
         return v
 
-    @validator("incident_date")
-    def validate_incident_date(cls, v):
+    @field_validator("incident_date")
+    @classmethod
+    def validate_incident_date(cls, v: datetime) -> datetime:
         now = datetime.now(v.tzinfo)
         if v > now:
             raise ValueError("Incident date cannot be in the future")
@@ -46,8 +48,7 @@ class ClaimPhotoResponse(BaseModel):
     description: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ClaimResponse(ClaimBase):
     id: UUID
@@ -57,5 +58,4 @@ class ClaimResponse(ClaimBase):
     updated_at: datetime
     photos: List[ClaimPhotoResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
