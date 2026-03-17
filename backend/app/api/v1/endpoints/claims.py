@@ -5,7 +5,6 @@ import magic
 from datetime import datetime
 from typing import Any
 
-import magic
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
