@@ -1,12 +1,10 @@
+import re
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-
-from pydantic import Field, field_validator, ConfigDict
-import re
 
 class ClaimBase(BaseModel):
     policy_number: str = Field(..., min_length=1, max_length=50)
@@ -18,7 +16,7 @@ class ClaimBase(BaseModel):
     vehicle_model: str = Field(..., min_length=1, max_length=100)
     vehicle_year: int = Field(..., ge=1900, le=datetime.now().year + 1)
     claimant_name: str = Field(..., min_length=1, max_length=255)
-    claimant_email: str = Field(..., pattern=r"^\S+@\S+\.\S+$")
+    claimant_email: EmailStr
     claimant_phone: str = Field(..., min_length=1, max_length=20)
 
     @field_validator("vehicle_vin")

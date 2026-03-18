@@ -39,6 +39,22 @@ async def test_create_claim_unauthorized(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
+async def test_create_claim_invalid_email(valid_claim_payload: dict):
+    invalid_payload = valid_claim_payload.copy()
+    invalid_payload["claimant_email"] = "invalid-email"
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            f"{settings.API_V1_STR}/claims/", json=invalid_payload, headers=auth_headers
+        )
+
+    assert response.status_code == 422
+    data = response.json()
+    assert data["detail"][0]["loc"] == ["body", "claimant_email"]
+
+@pytest.mark.asyncio
 async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
     invalid_payload = valid_claim_payload.copy()
     del invalid_payload["policy_number"]
