@@ -35,9 +35,9 @@ export default function ClaimDetailPage() {
 
     return (
         <div className="space-y-6 p-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Claim: {claim.claim_number}</h1>
-                <div className="space-x-2">
+                <div className="flex flex-wrap gap-2">
                     <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white">Approve</Button>
                     <Button onClick={() => handleAction('reject')} variant="destructive">Reject</Button>
                 </div>
