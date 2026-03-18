@@ -1,3 +1,4 @@
+import magic
 import os
 import secrets
 import uuid
