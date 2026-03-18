@@ -1,14 +1,11 @@
-import magic
 import asyncio
 import os
 import secrets
 import uuid
 from datetime import datetime
-import magic
 from typing import Any
 
 import magic
-
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -107,7 +104,10 @@ async def upload_claim_photo(
     """
     # 1. Validate File Content Type via magic bytes
     file_content = await file.read(2048)
-    actual_mime_type = await asyncio.to_thread(magic.from_buffer, file_content, mime=True)
+    # Offload the synchronous python-magic call to a thread to prevent blocking the async event loop
+    actual_mime_type = await asyncio.to_thread(
+        magic.from_buffer, file_content, mime=True
+    )
     await file.seek(0)
 
     if actual_mime_type not in ALLOWED_MIME_TYPES:
