@@ -1,12 +1,10 @@
+import re
 from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-
-from pydantic import Field, validator
-import re
 
 class ClaimBase(BaseModel):
     policy_number: str = Field(..., min_length=1, max_length=50)
@@ -18,11 +16,12 @@ class ClaimBase(BaseModel):
     vehicle_model: str = Field(..., min_length=1, max_length=100)
     vehicle_year: int = Field(..., ge=1900, le=datetime.now().year + 1)
     claimant_name: str = Field(..., min_length=1, max_length=255)
-    claimant_email: str = Field(..., pattern=r"^\S+@\S+\.\S+$")
+    claimant_email: EmailStr
     claimant_phone: str = Field(..., min_length=1, max_length=20)
 
-    @validator("vehicle_vin")
-    def validate_vin(cls, v):
+    @field_validator("vehicle_vin")
+    @classmethod
+    def validate_vin(cls, v: Optional[str]) -> Optional[str]:
         if v is not None:
             # Basic VIN validation: alphanumeric, 17 chars, no I, O, Q
             if not re.match(r"^[A-HJ-NPR-Z0-9]{17}$", v.upper()):
@@ -30,8 +29,9 @@ class ClaimBase(BaseModel):
             return v.upper()
         return v
 
-    @validator("incident_date")
-    def validate_incident_date(cls, v):
+    @field_validator("incident_date")
+    @classmethod
+    def validate_incident_date(cls, v: datetime) -> datetime:
         now = datetime.now(v.tzinfo)
         if v > now:
             raise ValueError("Incident date cannot be in the future")
@@ -46,8 +46,7 @@ class ClaimPhotoResponse(BaseModel):
     description: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ClaimResponse(ClaimBase):
     id: UUID
@@ -57,5 +56,4 @@ class ClaimResponse(ClaimBase):
     updated_at: datetime
     photos: List[ClaimPhotoResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

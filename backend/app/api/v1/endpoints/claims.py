@@ -1,9 +1,13 @@
 import magic
+import asyncio
 import os
 import secrets
 import uuid
 from datetime import datetime
+import magic
 from typing import Any
+
+import magic
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
@@ -76,12 +80,15 @@ async def get_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     """
     Get a claim by ID.
     """
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
+    stmt = (
+        select(Claim)
+        .where(Claim.id == claim_id)
+        .options(selectinload(Claim.photos))
+    )
+    result = await db.execute(stmt)
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-    # Helper to fetch photos eagerly if needed, or rely on lazy loading (async compatibility issue potentially)
-    # For now, let's assume simple access. If relationships fail in async, we need joinedload.
     return claim
 
 
@@ -100,7 +107,7 @@ async def upload_claim_photo(
     """
     # 1. Validate File Content Type via magic bytes
     file_content = await file.read(2048)
-    actual_mime_type = magic.from_buffer(file_content, mime=True)
+    actual_mime_type = await asyncio.to_thread(magic.from_buffer, file_content, mime=True)
     await file.seek(0)
 
     if actual_mime_type not in ALLOWED_MIME_TYPES:
