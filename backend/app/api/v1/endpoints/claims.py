@@ -1,3 +1,4 @@
+import magic
 import asyncio
 import os
 import secrets
