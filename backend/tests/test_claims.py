@@ -70,70 +70,14 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
-async def test_create_claim_success(valid_claim_payload: dict):
+async def test_create_claim_success(valid_claim_payload: dict, mock_db_session):
     # pylint: disable=import-outside-toplevel
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
 
     # Mocking the database session instead of spinning up sqlite+aiosqlite which hangs
-    class MockScalars:
-        def __init__(self, added):
-            self.added = added
-
-        def first(self):
-            return self.added[0]
-
-    class MockResult:
-        def __init__(self, added):
-            self.added = added
-
-        def scalars(self):
-            return MockScalars(self.added)
-
-    class MockDbSession:
-        def __init__(self):
-            self.added = []
-
-        def add(self, item):
-            self.added.append(item)
-
-        async def execute(self, stmt):
-            class MockResult:
-                def scalars(self):
-                    class MockScalars:
-                        def first(self):
-                            return self.item
-                        def __init__(self, item):
-                            self.item = item
-                    return MockScalars(self.item)
-                def __init__(self, item):
-                    self.item = item
-            return MockResult(self.added[0] if self.added else None)
-
-        async def commit(self):
-            pass
-
-        async def refresh(self, item):
-            item.id = "123e4567-e89b-12d3-a456-426614174000"
-            item.created_at = datetime.now(timezone.utc)
-            item.updated_at = datetime.now(timezone.utc)
-
-        async def execute(self, stmt):  # pylint: disable=unused-argument
-            class MockResultAsync:
-                def __init__(self, item):
-                    self.item = item
-                def scalars(self):
-                    class MockScalarsAsync:
-                        def __init__(self, it):
-                            self.it = it
-                        def first(self):
-                            self.it.photos = []
-                            return self.it
-                    return MockScalarsAsync(self.item)
-            return MockResultAsync(self.added[0])
-
-    mock_db = MockDbSession()
+    mock_db = mock_db_session()
 
     async def override_get_db():
         yield mock_db
@@ -166,44 +110,12 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
-async def test_create_claim_secure_randomness(valid_claim_payload: dict):
+async def test_create_claim_secure_randomness(valid_claim_payload: dict, mock_db_session):
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
 
-    class MockScalars:
-        def __init__(self, added):
-            self.added = added
-
-        def first(self):
-            return self.added[-1] if self.added else None
-
-    class MockResult:
-        def __init__(self, added):
-            self.added = added
-
-        def scalars(self):
-            return MockScalars(self.added)
-
-    class MockDbSession:
-        def __init__(self):
-            self.added = []
-
-        def add(self, item):
-            self.added.append(item)
-
-        async def commit(self):
-            pass
-
-        async def refresh(self, item):
-            item.id = "123e4567-e89b-12d3-a456-426614174000"
-            item.created_at = datetime.now(timezone.utc)
-            item.updated_at = datetime.now(timezone.utc)
-
-        async def execute(self, stmt):
-            return MockResult(self.added)
-
-    mock_db = MockDbSession()
+    mock_db = mock_db_session()
 
     async def override_get_db():
         yield mock_db
@@ -256,7 +168,7 @@ async def test_upload_claim_photo_invalid_content_type():
 
 
 @pytest.mark.asyncio
-async def test_get_claim_success(valid_claim_payload: dict):
+async def test_get_claim_success(valid_claim_payload: dict, mock_db_session):
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
@@ -284,19 +196,7 @@ async def test_get_claim_success(valid_claim_payload: dict):
 
     mock_claim = MockClaim()
 
-    class MockDbSession:
-        async def execute(self, stmt):
-            class MockResult:
-                def scalars(self):
-                    class MockScalars:
-                        def first(self):
-                            return mock_claim
-
-                    return MockScalars()
-
-            return MockResult()
-
-    mock_db = MockDbSession()
+    mock_db = mock_db_session(execute_result=mock_claim)
 
     async def override_get_db():
         yield mock_db
@@ -320,25 +220,13 @@ async def test_get_claim_success(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
-async def test_get_claim_not_found():
+async def test_get_claim_not_found(mock_db_session):
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
     claim_id = "123e4567-e89b-12d3-a456-426614174000"
 
-    class MockDbSession:
-        async def execute(self, stmt):
-            class MockResult:
-                def scalars(self):
-                    class MockScalars:
-                        def first(self):
-                            return None
-
-                    return MockScalars()
-
-            return MockResult()
-
-    mock_db = MockDbSession()
+    mock_db = mock_db_session(execute_result=None)
 
     async def override_get_db():
         yield mock_db
