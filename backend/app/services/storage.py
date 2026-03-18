@@ -28,10 +28,11 @@ class StorageService:
                 # Read in chunks to avoid memory issues with large files
                 while content := await file.read(1024 * 1024):  # 1MB chunks
                     accumulated_size += len(content)
+                    # Prevent DoS attacks by validating the accumulated chunk size limit
                     if accumulated_size > settings.MAX_UPLOAD_SIZE:
                         raise HTTPException(
                             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                            detail=f"File exceeds maximum allowed size of {settings.MAX_UPLOAD_SIZE} bytes"
+                            detail=f"Upload rejected: File exceeds the maximum allowed size limit of {settings.MAX_UPLOAD_SIZE} bytes."
                         )
                     await buffer.write(content)
         except Exception:
