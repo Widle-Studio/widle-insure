@@ -14,7 +14,6 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
-# from sqlalchemy.dialects.postgresql import UUID # Removed for SQLite compatibility
 from app.core.database import Base
 
 
@@ -37,8 +36,10 @@ class Claim(Base):
     status = Column(String, default="pending", index=True)
     estimated_damage_cost = Column(Numeric(10, 2), nullable=True)
     approved_amount = Column(Numeric(10, 2), nullable=True)
-    created_at = Column(DateTime, default=func.now())
-    updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=func.now())  # pylint: disable=not-callable
+    updated_at = Column(
+        DateTime, default=func.now(), onupdate=func.now()  # pylint: disable=not-callable
+    )
 
     photos = relationship(
         "ClaimPhoto", back_populates="claim", cascade="all, delete-orphan"
@@ -55,7 +56,7 @@ class ClaimPhoto(Base):
     photo_url = Column(String, nullable=False)
     photo_type = Column(String, nullable=True)
     ai_analysis = Column(JSON, nullable=True)
-    uploaded_at = Column(DateTime, default=func.now())
+    uploaded_at = Column(DateTime, default=func.now())  # pylint: disable=not-callable
 
     claim = relationship("Claim", back_populates="photos")
 
@@ -67,6 +68,6 @@ class ClaimAuditLog(Base):
     action = Column(String, nullable=False)
     performed_by = Column(String, nullable=True)
     details = Column(JSON, nullable=True)
-    created_at = Column(DateTime, default=func.now())
+    created_at = Column(DateTime, default=func.now())  # pylint: disable=not-callable
 
     claim = relationship("Claim", back_populates="audit_logs")
