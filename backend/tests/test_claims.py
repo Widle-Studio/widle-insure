@@ -166,33 +166,13 @@ async def test_upload_claim_photo_invalid_content_type():
 
 
 @pytest.mark.asyncio
-async def test_get_claim_success(valid_claim_payload: dict, mock_db_session):
+async def test_get_claim_success(valid_claim_payload: dict, mock_db_session, mock_claim_class):
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
     claim_id = "123e4567-e89b-12d3-a456-426614174000"
 
-    class MockClaim:
-        def __init__(self):
-            self.id = claim_id
-            self.policy_number = valid_claim_payload["policy_number"]
-            self.incident_date = datetime.fromisoformat(valid_claim_payload["incident_date"]).replace(tzinfo=timezone.utc)
-            self.incident_location = valid_claim_payload["incident_location"]
-            self.incident_description = valid_claim_payload["incident_description"]
-            self.vehicle_vin = valid_claim_payload["vehicle_vin"]
-            self.vehicle_make = valid_claim_payload["vehicle_make"]
-            self.vehicle_model = valid_claim_payload["vehicle_model"]
-            self.vehicle_year = valid_claim_payload["vehicle_year"]
-            self.claimant_name = valid_claim_payload["claimant_name"]
-            self.claimant_email = valid_claim_payload["claimant_email"]
-            self.claimant_phone = valid_claim_payload["claimant_phone"]
-            self.status = "New"
-            self.claim_number = "CLM-2024-001234"
-            self.created_at = datetime.now(timezone.utc)
-            self.updated_at = datetime.now(timezone.utc)
-            self.photos = []
-
-    mock_claim = MockClaim()
+    mock_claim = mock_claim_class(claim_id, valid_claim_payload)
 
     mock_db = mock_db_session(execute_result=mock_claim)
 
