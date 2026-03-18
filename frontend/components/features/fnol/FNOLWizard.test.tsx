@@ -41,6 +41,12 @@ jest.mock('framer-motion', () => {
 const mockAlert = jest.fn();
 window.alert = mockAlert;
 
+// Mock URL.createObjectURL and URL.revokeObjectURL for PhotoUpload
+const mockCreateObjectURL = jest.fn();
+const mockRevokeObjectURL = jest.fn();
+window.URL.createObjectURL = mockCreateObjectURL;
+window.URL.revokeObjectURL = mockRevokeObjectURL;
+
 describe('FNOLWizard Integration Tests', () => {
     beforeEach(() => {
         jest.clearAllMocks();
@@ -161,5 +167,48 @@ describe('FNOLWizard Integration Tests', () => {
         await waitFor(() => {
             expect(mockAlert).toHaveBeenCalledWith('Failed to submit claim. Please try again.');
         });
+    });
+
+    it('successfully submits the form with uploaded photos', async () => {
+        const user = userEvent.setup();
+        (apiClient.post as jest.Mock).mockResolvedValueOnce({ data: { id: 'claim-123' } });
+        (apiClient.post as jest.Mock).mockResolvedValueOnce({ data: { success: true } });
+        (apiClient.post as jest.Mock).mockResolvedValueOnce({ data: { success: true } });
+
+        render(<FNOLWizard />);
+
+        // Fill steps 1-3
+        await fillStep1(user);
+        await fillStep2(user);
+        await fillStep3(user);
+
+        // Upload photos in Step 4
+        const file1 = new File(['hello'], 'hello.png', { type: 'image/png' });
+        const file2 = new File(['world'], 'world.png', { type: 'image/png' });
+
+        const fileInput = document.getElementById('photos') as HTMLInputElement;
+        await user.upload(fileInput, [file1, file2]);
+
+        expect(mockCreateObjectURL).toHaveBeenCalledTimes(2);
+
+        // Submit claim
+        await user.click(screen.getByRole('button', { name: 'Submit Claim' }));
+
+        await waitFor(() => {
+            // 1 for claim, 2 for photos
+            expect(apiClient.post).toHaveBeenCalledTimes(3);
+        });
+
+        // Verify the claim post
+        expect(apiClient.post).toHaveBeenCalledWith('/api/v1/claims', expect.any(Object));
+
+        // Verify the photo posts
+        expect(apiClient.post).toHaveBeenCalledWith(
+            '/api/v1/claims/claim-123/photos',
+            expect.any(FormData),
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+
+        expect(mockPush).toHaveBeenCalledWith('/?claim_id=claim-123&status=submitted');
     });
 });
