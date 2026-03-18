@@ -4,6 +4,8 @@ import uuid
 from datetime import datetime
 from typing import Any
 
+import magic
+
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -75,12 +77,15 @@ async def get_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     """
     Get a claim by ID.
     """
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
+    stmt = (
+        select(Claim)
+        .where(Claim.id == claim_id)
+        .options(selectinload(Claim.photos))
+    )
+    result = await db.execute(stmt)
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-    # Helper to fetch photos eagerly if needed, or rely on lazy loading (async compatibility issue potentially)
-    # For now, let's assume simple access. If relationships fail in async, we need joinedload.
     return claim
 
 
