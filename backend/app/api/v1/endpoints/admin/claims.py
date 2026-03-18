@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import get_current_admin_user
@@ -25,7 +26,7 @@ async def list_claims(
     """
     List all claims (admin).
     """
-    query = select(Claim)
+    query = select(Claim).options(selectinload(Claim.photos))
     if status:
         query = query.where(Claim.status == status)
 
@@ -44,7 +45,11 @@ async def get_claim(
     """
     Get claim details (admin).
     """
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
+    result = await db.execute(
+        select(Claim)
+        .where(Claim.id == claim_id)
+        .options(selectinload(Claim.photos))
+    )
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
@@ -61,7 +66,11 @@ async def update_claim_status(
     """
     Update claim status.
     """
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
+    result = await db.execute(
+        select(Claim)
+        .where(Claim.id == claim_id)
+        .options(selectinload(Claim.photos))
+    )
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
@@ -81,7 +90,11 @@ async def approve_claim(
     """
     Approve a claim.
     """
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
+    result = await db.execute(
+        select(Claim)
+        .where(Claim.id == claim_id)
+        .options(selectinload(Claim.photos))
+    )
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
@@ -101,7 +114,11 @@ async def reject_claim(
     """
     Reject a claim.
     """
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
+    result = await db.execute(
+        select(Claim)
+        .where(Claim.id == claim_id)
+        .options(selectinload(Claim.photos))
+    )
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")

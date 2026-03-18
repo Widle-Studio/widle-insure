@@ -80,6 +80,7 @@ async def get_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     """
     Get a claim by ID.
     """
+    # Fetch claim with eager loading of photos to avoid async compatibility issues
     stmt = (
         select(Claim)
         .where(Claim.id == claim_id)
