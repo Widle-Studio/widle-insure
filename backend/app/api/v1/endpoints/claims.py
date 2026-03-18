@@ -3,6 +3,7 @@ import os
 import secrets
 import uuid
 from datetime import datetime
+import magic
 from typing import Any
 
 import magic
