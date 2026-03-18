@@ -1,4 +1,3 @@
-import re
 from datetime import datetime, timezone
 from unittest.mock import patch
 
@@ -6,8 +5,8 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
-from app.main import app
 from app.core.database import get_db
+from app.main import app
 
 
 @pytest.fixture
@@ -56,7 +55,6 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
 @pytest.mark.asyncio
 async def test_create_claim_success(valid_claim_payload: dict):
     # pylint: disable=import-outside-toplevel
-    from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
 
@@ -151,7 +149,6 @@ async def test_create_claim_success(valid_claim_payload: dict):
 
 @pytest.mark.asyncio
 async def test_create_claim_secure_randomness(valid_claim_payload: dict):
-    from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
 
@@ -241,7 +238,6 @@ async def test_upload_claim_photo_invalid_content_type():
 
 @pytest.mark.asyncio
 async def test_get_claim_success(valid_claim_payload: dict):
-    from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
     claim_id = "123e4567-e89b-12d3-a456-426614174000"
@@ -305,7 +301,6 @@ async def test_get_claim_success(valid_claim_payload: dict):
 
 @pytest.mark.asyncio
 async def test_get_claim_not_found():
-    from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
     claim_id = "123e4567-e89b-12d3-a456-426614174000"

@@ -1,5 +1,6 @@
 from app.core.database import engine
 
+
 def test_database_engine_logging_disabled():
     """
     Test that SQLAlchemy engine logging (echo) is disabled by default.
