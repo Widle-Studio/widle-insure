@@ -141,4 +141,16 @@ describe('PhotoUpload', () => {
 
         expect(inputClickSpy).toHaveBeenCalled();
     });
+
+    it('does nothing when no files are selected', () => {
+        render(<PhotoUpload onPhotosSelected={mockOnPhotosSelected} />);
+
+        const input = document.getElementById('photos') as HTMLInputElement;
+
+        // Simulate change with null files (e.g., cancelled file selection)
+        fireEvent.change(input, { target: { files: null } });
+
+        expect(mockOnPhotosSelected).not.toHaveBeenCalled();
+        expect(URL.createObjectURL).not.toHaveBeenCalled();
+    });
 });
