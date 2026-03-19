@@ -32,7 +32,7 @@ export default function MarketingPage() {
                     </p>
                 </div>
 
-                <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-2 lg:grid-cols-4 mt-8">
+                <div className="mx-auto grid justify-center gap-4 grid-cols-1 sm:grid-cols-2 md:max-w-[64rem] md:grid-cols-2 lg:grid-cols-4 mt-8 px-4">
                     <Card className="shadow-material-2 hover:shadow-material-4 transition-shadow">
                         <CardHeader>
                             <Zap className="h-10 w-10 mb-4 text-primary" />
