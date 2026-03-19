@@ -37,6 +37,8 @@ class Claim(Base):
     status = Column(String, default="pending", index=True)
     estimated_damage_cost = Column(Numeric(10, 2), nullable=True)
     approved_amount = Column(Numeric(10, 2), nullable=True)
+    fraud_score = Column(Integer, nullable=True)
+    adjudication_reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

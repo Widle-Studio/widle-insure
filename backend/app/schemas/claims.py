@@ -53,6 +53,8 @@ class ClaimResponse(ClaimBase):
     id: UUID
     claim_number: str
     status: str
+    fraud_score: Optional[int] = None
+    adjudication_reason: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     photos: List[ClaimPhotoResponse] = []

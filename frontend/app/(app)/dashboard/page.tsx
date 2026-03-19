@@ -47,7 +47,9 @@ export default function DashboardPage() {
                     </CardHeader>
                     <CardContent className="space-y-2">
                         <Button className="w-full">New Claim</Button>
-                        <Button variant="outline" className="w-full">View Claims</Button>
+                        <a href="/claims" className="w-full block">
+                            <Button variant="outline" className="w-full">Review Queue</Button>
+                        </a>
                     </CardContent>
                 </Card>
             </div>

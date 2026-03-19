@@ -2,9 +2,11 @@ import os
 import secrets
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+import magic
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, Query
 from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -15,12 +17,32 @@ from app.core.security import get_api_key
 from app.models.claims import Claim, ClaimPhoto
 from app.schemas.claims import ClaimCreate, ClaimPhotoResponse, ClaimResponse
 from app.services.storage import storage_service
+from app.services.fraud_service import fraud_service
+from app.services.adjudication_service import adjudication_service
+from app.api.v1.endpoints.policies import MOCK_POLICIES
 
 router = APIRouter()
 
 # Security constants for file uploads
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/png", "image/webp"}
+
+
+@router.get("/", response_model=List[ClaimResponse], dependencies=[Depends(get_api_key)])
+async def get_claims(
+    status: Optional[str] = Query(None, description="Filter by status"),
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    Get all claims, optionally filtered by status.
+    """
+    stmt = select(Claim).options(selectinload(Claim.photos))
+    if status:
+        stmt = stmt.where(Claim.status == status)
+
+    result = await db.execute(stmt)
+    claims = result.scalars().all()
+    return claims
 
 
 @router.post("/", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
@@ -141,3 +163,61 @@ async def upload_claim_photo(
     await db.refresh(new_photo)
 
     return new_photo
+
+
+@router.post(
+    "/{claim_id}/adjudicate",
+    response_model=ClaimResponse,
+    dependencies=[Depends(get_api_key)],
+)
+async def adjudicate_claim(
+    claim_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db)
+) -> Any:
+    """
+    Run the adjudication process for a claim.
+    """
+    stmt = select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
+    result = await db.execute(stmt)
+    claim = result.scalars().first()
+
+    if not claim:
+        raise HTTPException(status_code=404, detail="Claim not found")
+
+    # Get policy info (mocked for now)
+    policy = MOCK_POLICIES.get(claim.policy_number)
+    if not policy:
+        raise HTTPException(status_code=400, detail="Policy not found for claim")
+
+    # Mock AI analysis based on what we would expect from the photo analysis step
+    ai_analysis_mock = {
+        "confidence": 0.95,
+        "red_flags": []
+    }
+
+    # If the estimated cost isn't set, we might need a mock cost
+    if not claim.estimated_damage_cost:
+        claim.estimated_damage_cost = 1500.00  # Default mock
+
+    # 1. Calculate Fraud Score
+    # We would count recent claims here, mocking as 0 for now
+    fraud_score = fraud_service.calculate_fraud_score(claim, ai_analysis_mock, recent_claims_count=0)
+    claim.fraud_score = fraud_score
+
+    # 2. Run Adjudication
+    claim_dict = {
+        "estimated_damage_cost": float(claim.estimated_damage_cost)
+    }
+    adjudication_result = adjudication_service.evaluate_claim(claim_dict, policy, ai_analysis_mock, fraud_score)
+
+    # 3. Update Claim Status
+    claim.status = adjudication_result["status"]
+    claim.adjudication_reason = adjudication_result["reason"]
+
+    if claim.status == "Approved":
+        claim.approved_amount = claim.estimated_damage_cost
+
+    await db.commit()
+    await db.refresh(claim)
+
+    return claim
