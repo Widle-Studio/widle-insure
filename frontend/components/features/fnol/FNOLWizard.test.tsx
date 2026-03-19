@@ -95,7 +95,7 @@ describe('FNOLWizard Integration Tests', () => {
         await user.click(screen.getByRole('button', { name: 'Submit Claim' }));
 
         await waitFor(() => {
-            expect(apiClient.post).toHaveBeenCalledTimes(1);
+            expect(apiClient.post).toHaveBeenCalledTimes(2);
         });
 
         expect(apiClient.post).toHaveBeenCalledWith('/api/v1/claims', {
@@ -112,7 +112,9 @@ describe('FNOLWizard Integration Tests', () => {
             vehicle_vin: '1HGCM82633A00000',
         });
 
-        expect(mockPush).toHaveBeenCalledWith('/?claim_id=claim-123&status=submitted');
+        expect(apiClient.post).toHaveBeenCalledWith('/api/v1/claims/claim-123/analyze');
+
+        expect(mockPush).toHaveBeenCalledWith('/claims/claim-123/results');
     });
 
     it('prevents navigation to next step if validation fails', async () => {
@@ -195,8 +197,8 @@ describe('FNOLWizard Integration Tests', () => {
         await user.click(screen.getByRole('button', { name: 'Submit Claim' }));
 
         await waitFor(() => {
-            // 1 for claim, 2 for photos
-            expect(apiClient.post).toHaveBeenCalledTimes(3);
+            // 1 for claim, 2 for photos, 1 for analyze
+            expect(apiClient.post).toHaveBeenCalledTimes(4);
         });
 
         // Verify the claim post
@@ -209,6 +211,9 @@ describe('FNOLWizard Integration Tests', () => {
             { headers: { 'Content-Type': 'multipart/form-data' } }
         );
 
-        expect(mockPush).toHaveBeenCalledWith('/?claim_id=claim-123&status=submitted');
+        // Verify the analyze post
+        expect(apiClient.post).toHaveBeenCalledWith('/api/v1/claims/claim-123/analyze');
+
+        expect(mockPush).toHaveBeenCalledWith('/claims/claim-123/results');
     });
 });

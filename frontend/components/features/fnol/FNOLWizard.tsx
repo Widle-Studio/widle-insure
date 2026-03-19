@@ -76,8 +76,11 @@ export function FNOLWizard() {
                 }));
             }
 
-            // 3. Redirect to Success/Summary Page
-            router.push(`/?claim_id=${claimId}&status=submitted`); // Temporary redirect to home
+            // 3. Trigger AI Analysis
+            await apiClient.post(`/api/v1/claims/${claimId}/analyze`);
+
+            // 4. Redirect to AI Results Page
+            router.push(`/claims/${claimId}/results`);
         } catch (error) {
             console.error("Error submitting claim:", error);
             alert("Failed to submit claim. Please try again.");
