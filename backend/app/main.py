@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.endpoints import claims, policies
 from app.core.config import settings
 from app.core.log_config import setup_logging
 
