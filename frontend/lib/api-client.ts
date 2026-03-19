@@ -9,6 +9,17 @@ export const apiClient = axios.create({
     },
 });
 
+apiClient.interceptors.request.use((config) => {
+    // Only in browser environment
+    if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('adminToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+    }
+    return config;
+});
+
 export const checkBackEndHealth = async () => {
     try {
         const response = await apiClient.get('/health');

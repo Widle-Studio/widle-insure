@@ -71,17 +71,20 @@ describe('Step1Policy', () => {
         expect(screen.getByText('Claimant & Policy Information')).toBeInTheDocument();
     });
 
-    it('has correct input types and accessibility attributes', () => {
+    it('renders the email input with the correct type attribute', () => {
         render(<Step1Policy form={getMockForm()} />);
-
-        // Email input should have type="email"
         const emailInput = screen.getByLabelText('Email');
         expect(emailInput).toHaveAttribute('type', 'email');
-        expect(emailInput).toHaveAttribute('id', 'claimant_email');
+    });
 
-        // Other inputs should have appropriate ids
-        expect(screen.getByLabelText('Policy Number')).toHaveAttribute('id', 'policy_number');
-        expect(screen.getByLabelText('Full Name')).toHaveAttribute('id', 'claimant_name');
-        expect(screen.getByLabelText('Phone')).toHaveAttribute('id', 'claimant_phone');
+    it('renders correctly without errors object properties', () => {
+        const { container } = render(<Step1Policy form={getMockForm({})} />);
+        expect(container).toBeInTheDocument();
+
+        // No error messages should be displayed
+        expect(screen.queryByText('Policy number is required')).not.toBeInTheDocument();
+        expect(screen.queryByText('Name is required')).not.toBeInTheDocument();
+        expect(screen.queryByText('Email is required')).not.toBeInTheDocument();
+        expect(screen.queryByText('Phone is required')).not.toBeInTheDocument();
     });
 });

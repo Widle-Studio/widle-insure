@@ -26,6 +26,21 @@ headers = {"x-api-key": settings.API_KEY}
             },
         ),
         (
+            "POL-987654321",
+            headers,
+            200,
+            {
+                "policy_number": "POL-987654321",
+                "holder_name": "Jane Smith",
+                "status": "Expired",
+                "vehicle_info": "2019 Honda Civic",
+                "coverage_limit": 30000.0,
+                "deductible": 1000.0,
+                "effective_date": "2023-01-01",
+                "expiration_date": "2024-01-01",
+            },
+        ),
+        (
             "POL-NONEXISTENT",
             headers,
             404,

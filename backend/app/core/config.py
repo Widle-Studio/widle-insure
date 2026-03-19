@@ -15,6 +15,9 @@ class Settings(BaseSettings):
 
     DEBUG: bool = False
 
+    # Maximum upload file size (default 50MB)
+    MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024
+
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:

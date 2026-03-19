@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
+from unittest.mock import patch
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
 from app.core.config import settings
+from app.core.database import get_db
 from app.main import app
 
 
@@ -36,6 +38,22 @@ async def test_create_claim_unauthorized(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
+async def test_create_claim_invalid_email(valid_claim_payload: dict):
+    invalid_payload = valid_claim_payload.copy()
+    invalid_payload["claimant_email"] = "invalid-email"
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            f"{settings.API_V1_STR}/claims/", json=invalid_payload, headers=auth_headers
+        )
+
+    assert response.status_code == 422
+    data = response.json()
+    assert data["detail"][0]["loc"] == ["body", "claimant_email"]
+
+@pytest.mark.asyncio
 async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
     invalid_payload = valid_claim_payload.copy()
     del invalid_payload["policy_number"]
@@ -51,55 +69,29 @@ async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
 
 
 @pytest.mark.asyncio
-async def test_create_claim_success(valid_claim_payload: dict):
-    from app.core.database import get_db
+async def test_create_claim_success(valid_claim_payload: dict, mock_db_session):
+    # pylint: disable=import-outside-toplevel
 
     auth_headers = {"x-api-key": settings.API_KEY}
 
     # Mocking the database session instead of spinning up sqlite+aiosqlite which hangs
-    class MockDbSession:
-        def __init__(self):
-            self.added = []
-
-        def add(self, item):
-            self.added.append(item)
-
-        async def commit(self):
-            pass
-
-        async def refresh(self, item):
-            item.id = "123e4567-e89b-12d3-a456-426614174000"
-            item.created_at = datetime.now(timezone.utc)
-            item.updated_at = datetime.now(timezone.utc)
-            pass
-
-        async def execute(self, stmt):
-            class MockResult:
-                def scalars(inner_self):
-                    class MockScalars:
-                        def first(self2):
-                            return self.added[0]
-
-                    return MockScalars()
-
-            return MockResult()
-
-    mock_db = MockDbSession()
+    mock_db = mock_db_session()
 
     async def override_get_db():
         yield mock_db
 
     app.dependency_overrides[get_db] = override_get_db
 
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post(
-            f"{settings.API_V1_STR}/claims/",
-            json=valid_claim_payload,
-            headers=auth_headers,
-        )
-
-    app.dependency_overrides.clear()
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                f"{settings.API_V1_STR}/claims/",
+                json=valid_claim_payload,
+                headers=auth_headers,
+            )
+    finally:
+        app.dependency_overrides.clear()
 
     assert response.status_code == 200
     data = response.json()
@@ -113,6 +105,41 @@ async def test_create_claim_success(valid_claim_payload: dict):
     db_claim = mock_db.added[0]
     assert db_claim.policy_number == valid_claim_payload["policy_number"]
     assert db_claim.status == "New"
+
+
+@pytest.mark.asyncio
+async def test_create_claim_secure_randomness(valid_claim_payload: dict, mock_db_session):
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+
+    mock_db = mock_db_session()
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+
+    try:
+        with patch(
+            "app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456
+        ) as mock_randbelow:
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.post(
+                    f"{settings.API_V1_STR}/claims/",
+                    json=valid_claim_payload,
+                    headers=auth_headers,
+                )
+                assert response.status_code == 200
+                data = response.json()
+                claim_number = data["claim_number"]
+
+                assert "123456" in claim_number
+                mock_randbelow.assert_called_once_with(1000000)
+    finally:
+        app.dependency_overrides.clear()
 
 
 @pytest.mark.asyncio
@@ -136,3 +163,62 @@ async def test_upload_claim_photo_invalid_content_type():
 
     assert response.status_code == 400
     assert "Invalid file content type" in response.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_get_claim_success(valid_claim_payload: dict, mock_db_session, mock_claim_class):
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    claim_id = "123e4567-e89b-12d3-a456-426614174000"
+
+    mock_claim = mock_claim_class(claim_id, valid_claim_payload)
+
+    mock_db = mock_db_session(execute_result=mock_claim)
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get(
+            f"{settings.API_V1_STR}/claims/{claim_id}",
+            headers=auth_headers,
+        )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["id"] == claim_id
+    assert data["policy_number"] == mock_claim.policy_number
+    assert data["claim_number"] == mock_claim.claim_number
+
+
+@pytest.mark.asyncio
+async def test_get_claim_not_found(mock_db_session):
+    from app.core.database import get_db
+
+    auth_headers = {"x-api-key": settings.API_KEY}
+    claim_id = "123e4567-e89b-12d3-a456-426614174000"
+
+    mock_db = mock_db_session(execute_result=None)
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get(
+            f"{settings.API_V1_STR}/claims/{claim_id}",
+            headers=auth_headers,
+        )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Claim not found"
