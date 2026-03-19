@@ -13,7 +13,7 @@ export default function MarketingPage() {
                     <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
                         Experience the future of First Notice of Loss. Automated damage assessment, instant adjudication, and faster payouts.
                     </p>
-                    <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full px-4 sm:w-auto sm:px-0">
+                    <div className="flex flex-col sm:flex-row gap-4 mt-6 w-full sm:w-auto px-4 sm:px-0">
                         <Button size="lg" className="shadow-material-2 w-full sm:w-auto" asChild>
                             <a href="/login">Get Started</a>
                         </Button>

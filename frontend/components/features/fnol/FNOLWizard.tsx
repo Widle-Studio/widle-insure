@@ -90,12 +90,12 @@ export function FNOLWizard() {
 
     return (
         <div className="max-w-2xl mx-auto p-4 space-y-6">
-            <div className="flex flex-col space-y-2">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+            <div className="flex flex-col space-y-4 sm:space-y-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
                         File a New Claim
                     </h2>
-                    <span className="text-sm font-medium text-muted-foreground">Step {step} of {totalSteps}</span>
+                    <span className="text-sm font-medium text-muted-foreground self-end sm:self-auto">Step {step} of {totalSteps}</span>
                 </div>
                 {/* Modern Progress Bar */}
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
@@ -131,7 +131,7 @@ export function FNOLWizard() {
                             </AnimatePresence>
                         </div>
 
-                        <div className="mt-8 flex flex-col-reverse sm:flex-row justify-between gap-4 pt-4 border-t">
+                        <div className="mt-8 flex flex-col-reverse sm:flex-row justify-between pt-4 border-t gap-4">
                             <Button
                                 type="button"
                                 variant="outline"

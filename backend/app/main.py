@@ -23,13 +23,20 @@ app.add_middleware(
 
 @app.get("/health")
 async def health_check():
+    """Returns the health status of the backend service."""
     return {"status": "healthy", "service": "widle-insure-backend"}
 
 @app.get("/")
 async def root():
+    """Root endpoint providing a welcome message."""
     return {"message": "Welcome to Widle Insure API"}
 
 from app.api.v1.endpoints import claims, policies
+from app.api.v1.endpoints.admin import auth as admin_auth
+from app.api.v1.endpoints.admin import claims as admin_claims
 
 app.include_router(claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"])
 app.include_router(policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"])
+
+app.include_router(admin_auth.router, prefix=f"{settings.API_V1_STR}/admin/auth", tags=["admin-auth"])
+app.include_router(admin_claims.router, prefix=f"{settings.API_V1_STR}/admin/claims", tags=["admin-claims"])
