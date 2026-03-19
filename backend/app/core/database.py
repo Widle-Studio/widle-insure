@@ -5,7 +5,7 @@ from app.core.config import settings
 
 engine = create_async_engine(
     settings.SQLALCHEMY_DATABASE_URI,
-    echo=False,
+    echo=settings.DEBUG,
     future=True
 )
 
