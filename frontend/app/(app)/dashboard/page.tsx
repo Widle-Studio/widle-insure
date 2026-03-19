@@ -19,7 +19,7 @@ export default function DashboardPage() {
             <div className="flex flex-col space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
                 <p className="text-slate-500">
-                    Welcome to Widle Insure. Here's an overview of your claims and system status.
+                    Welcome to Widle Insure. Here&apos;s an overview of your claims and system status.
                 </p>
             </div>
 

@@ -108,6 +108,8 @@ lerna-debug.log*
 # -----------------
 # Env Variables
 # -----------------
+# SECURITY: Never commit secrets to version control
+/.env
 .env
 .env.local
 .env.development.local

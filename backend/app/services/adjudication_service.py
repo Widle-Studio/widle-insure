@@ -47,12 +47,18 @@ class AdjudicationService:
 
         # 2. Deterministic Rule: Hard Cap on Auto-Approval Amount
         if estimated_cost > cls.MAX_AUTO_APPROVE_AMOUNT:
-            reasons.append(f"Estimated cost (${estimated_cost}) exceeds auto-approval limit (${cls.MAX_AUTO_APPROVE_AMOUNT}).")
+            reasons.append(
+                f"Estimated cost (${estimated_cost}) exceeds auto-approval limit "
+                f"(${cls.MAX_AUTO_APPROVE_AMOUNT})."
+            )
 
         # 3. Deterministic Rule: Fraud Flags
         safe_fraud_score = safe_float(fraud_score)
         if safe_fraud_score > cls.MAX_FRAUD_SCORE:
-            reasons.append(f"Fraud score ({safe_fraud_score}) exceeds acceptable limit ({cls.MAX_FRAUD_SCORE}).")
+            reasons.append(
+                f"Fraud score ({safe_fraud_score}) exceeds acceptable limit "
+                f"({cls.MAX_FRAUD_SCORE})."
+            )
 
         # 4. Deterministic Rule: AI Red Flags
         # Even if AI confidence is high, explicit red flags must trigger review
@@ -63,14 +69,20 @@ class AdjudicationService:
         # 5. Probabilistic Guardrail: AI Confidence Floor
         ai_confidence = safe_float(ai_analysis.get("confidence"))
         if ai_confidence < cls.REQUIRED_AI_CONFIDENCE:
-            reasons.append(f"AI confidence ({ai_confidence}) is below required threshold ({cls.REQUIRED_AI_CONFIDENCE}).")
+            reasons.append(
+                f"AI confidence ({ai_confidence}) is below required threshold "
+                f"({cls.REQUIRED_AI_CONFIDENCE})."
+            )
 
         # 6. Deterministic Rule: Coverage Limits
         coverage_limit = safe_float(policy.get("coverage_limit"))
         deductible = safe_float(policy.get("deductible"))
 
         if estimated_cost > (coverage_limit - deductible):
-             reasons.append(f"Estimated cost (${estimated_cost}) exceeds coverage limit minus deductible (${coverage_limit - deductible}).")
+            reasons.append(
+                f"Estimated cost (${estimated_cost}) exceeds coverage limit minus "
+                f"deductible (${coverage_limit - deductible})."
+            )
 
         # Decision Logic
         if reasons:

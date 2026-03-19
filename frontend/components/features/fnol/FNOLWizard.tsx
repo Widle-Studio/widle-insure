@@ -34,7 +34,7 @@ export function FNOLWizard() {
     // ... (rest of form setup)
 
     const form = useForm<FNOLFormData>({
-        mode: "onBlur", // Validate on blur to reduce re-renders during typing
+        mode: "onSubmit", // Validate on submit to reduce re-renders during typing
         // resolver: zodResolver(schema) // Add schema later
     });
 
@@ -90,12 +90,12 @@ export function FNOLWizard() {
 
     return (
         <div className="max-w-2xl mx-auto p-4 space-y-6">
-            <div className="flex flex-col space-y-2">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+            <div className="flex flex-col space-y-4 sm:space-y-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
                         File a New Claim
                     </h2>
-                    <span className="text-sm font-medium text-muted-foreground">Step {step} of {totalSteps}</span>
+                    <span className="text-sm font-medium text-muted-foreground self-end sm:self-auto">Step {step} of {totalSteps}</span>
                 </div>
                 {/* Modern Progress Bar */}
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
@@ -131,23 +131,23 @@ export function FNOLWizard() {
                             </AnimatePresence>
                         </div>
 
-                        <div className="mt-8 flex justify-between pt-4 border-t">
+                        <div className="mt-8 flex flex-col-reverse sm:flex-row justify-between pt-4 border-t gap-4">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={prevStep}
                                 disabled={step === 1 || isSubmitting}
-                                className="w-32"
+                                className="w-full sm:w-32"
                             >
                                 Back
                             </Button>
 
                             {step < totalSteps ? (
-                                <Button type="button" onClick={nextStep} className="w-32">
+                                <Button type="button" onClick={nextStep} className="w-full sm:w-32">
                                     Next
                                 </Button>
                             ) : (
-                                <Button type="submit" disabled={isSubmitting} className="w-40 bg-gradient-to-r from-primary to-blue-600 hover:opacity-90 transition-opacity">
+                                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-40 bg-gradient-to-r from-primary to-blue-600 hover:opacity-90 transition-opacity">
                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Submit Claim
                                 </Button>
