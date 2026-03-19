@@ -19,12 +19,18 @@ export default function ClaimDetailPage() {
         }
     }, [params.id]);
 
-    const handleAction = async (action: 'approve' | 'reject') => {
+    const handleAction = async (action: 'approve' | 'reject' | 'payout') => {
         try {
-            const res = await apiClient.post(`/admin/claims/${params.id}/${action}`);
-            setClaim(res.data);
-            alert(`Claim successfully ${action}ed`);
-            router.push('/claims');
+            if (action === 'payout') {
+                const res = await apiClient.post(`/payments/${params.id}/payout`);
+                setClaim(res.data);
+                alert(`Claim payout initiated successfully`);
+            } else {
+                const res = await apiClient.post(`/admin/claims/${params.id}/${action}`);
+                setClaim(res.data);
+                alert(`Claim successfully ${action}ed`);
+            }
+            router.refresh();
         } catch (error) {
             console.error(error);
             alert(`Failed to ${action} claim`);
@@ -38,8 +44,15 @@ export default function ClaimDetailPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Claim: {claim.claim_number}</h1>
                 <div className="flex flex-wrap gap-2">
-                    <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white">Approve</Button>
-                    <Button onClick={() => handleAction('reject')} variant="destructive">Reject</Button>
+                    {claim.status === "Approved" && (
+                        <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white">Initiate Payout</Button>
+                    )}
+                    {claim.status !== "Approved" && claim.status !== "Rejected" && claim.status !== "Paid" && (
+                        <>
+                            <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white">Approve</Button>
+                            <Button onClick={() => handleAction('reject')} variant="destructive">Reject</Button>
+                        </>
+                    )}
                 </div>
             </div>
 
