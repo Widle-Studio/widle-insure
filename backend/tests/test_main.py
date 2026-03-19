@@ -22,7 +22,10 @@ async def test_health_check_async():
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         response = await ac.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy", "service": "widle-insure-backend"}
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["service"] == "widle-insure-backend"
+    assert "database" in data
 
 def test_read_root():
     """Test the root endpoint for a successful response and correct message."""
@@ -34,4 +37,7 @@ def test_health_check():
     """Test the health check endpoint for system status."""
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy", "service": "widle-insure-backend"}
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["service"] == "widle-insure-backend"
+    assert "database" in data
