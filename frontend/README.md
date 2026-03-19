@@ -37,7 +37,7 @@ Next.js 14+ frontend for the AI-Automated Auto Insurance Claims Platform.
 *   `lib/`: Utilities and API clients
 
 ## Week 1 Tasks
-- [ ] Initialize Next.js project
-- [ ] Setup Shadcn UI
-- [ ] Connector to Backend Health Check
-- [ ] Basic Insurance Theme
+- [x] Initialize Next.js project
+- [x] Setup Shadcn UI
+- [x] Connector to Backend Health Check
+- [x] Basic Insurance Theme
