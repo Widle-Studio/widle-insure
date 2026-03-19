@@ -15,10 +15,11 @@ import uuid
 
 from app.core.database import get_db
 from app.core.security import get_api_key
-from app.models.claims import Claim, ClaimPhoto
+from app.models.claims import Claim, ClaimPhoto, ClaimAuditLog
 from app.schemas.claims import ClaimCreate, ClaimPhotoResponse, ClaimResponse
 from app.services.storage import storage_service
 from app.services.ai_service import ai_service
+from app.services.fraud_service import fraud_service
 
 router = APIRouter()
 
@@ -193,6 +194,25 @@ async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db))
     for photo in claim_with_photos.photos:
         photo.ai_analysis = analysis
 
+    # Calculate Fraud Score
+    fraud_score = await fraud_service.calculate_fraud_score(
+        claim_with_photos,
+        db,
+        ai_confidence=analysis.get("confidence", 1.0)
+    )
+
+    # Log the fraud analysis in the audit log
+    audit_log = ClaimAuditLog(
+        claim_id=claim_id,
+        action="fraud_analysis",
+        performed_by="system",
+        details={"fraud_score": fraud_score, "ai_confidence": analysis.get("confidence", 1.0)}
+    )
+    db.add(audit_log)
+
     await db.commit()
+
+    # Add fraud score to the response
+    analysis["fraud_score"] = fraud_score
 
     return {"claim_id": claim_id, "analysis": analysis}

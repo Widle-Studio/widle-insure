@@ -10,6 +10,7 @@ describe('AnalysisResults', () => {
     confidence: 0.85,
     fraud_indicators: ['Mismatched damage pattern'],
     reasoning: 'Mock reasoning text',
+    fraud_score: 45
   };
 
   it('renders analysis details correctly', () => {
@@ -24,6 +25,10 @@ describe('AnalysisResults', () => {
     // Check damaged parts
     expect(screen.getByText('front bumper')).toBeInTheDocument();
     expect(screen.getByText('hood')).toBeInTheDocument();
+
+    // Check fraud score
+    expect(screen.getByText('Fraud Risk Score')).toBeInTheDocument();
+    expect(screen.getByText('45 / 100')).toBeInTheDocument();
 
     // Check fraud indicators
     expect(screen.getByText('Fraud Indicators Detected')).toBeInTheDocument();

@@ -12,6 +12,7 @@ interface AnalysisResultsProps {
     confidence: number;
     fraud_indicators: string[];
     reasoning: string;
+    fraud_score?: number;
   };
 }
 
@@ -22,6 +23,8 @@ export function AnalysisResults({ analysis }: AnalysisResultsProps) {
     major: "bg-orange-500",
     total_loss: "bg-red-500",
   }[analysis.severity];
+
+  const fraudScoreColor = (analysis.fraud_score ?? 0) > 30 ? "text-red-600 font-bold" : "text-green-600";
 
   return (
     <div className="space-y-6">
@@ -45,6 +48,16 @@ export function AnalysisResults({ analysis }: AnalysisResultsProps) {
               ${analysis.estimated_cost.toLocaleString()}
             </span>
           </div>
+
+          {/* Fraud Score */}
+          {analysis.fraud_score !== undefined && (
+             <div className="flex items-center justify-between">
+               <span className="font-medium">Fraud Risk Score</span>
+               <span className={fraudScoreColor}>
+                 {analysis.fraud_score} / 100
+               </span>
+             </div>
+          )}
 
           {/* Confidence */}
           <div className="flex items-center justify-between">
