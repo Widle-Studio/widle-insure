@@ -131,23 +131,23 @@ export function FNOLWizard() {
                             </AnimatePresence>
                         </div>
 
-                        <div className="mt-8 flex justify-between pt-4 border-t">
+                        <div className="mt-8 flex flex-col-reverse sm:flex-row justify-between gap-4 pt-4 border-t">
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={prevStep}
                                 disabled={step === 1 || isSubmitting}
-                                className="w-32"
+                                className="w-full sm:w-32"
                             >
                                 Back
                             </Button>
 
                             {step < totalSteps ? (
-                                <Button type="button" onClick={nextStep} className="w-32">
+                                <Button type="button" onClick={nextStep} className="w-full sm:w-32">
                                     Next
                                 </Button>
                             ) : (
-                                <Button type="submit" disabled={isSubmitting} className="w-40 bg-gradient-to-r from-primary to-blue-600 hover:opacity-90 transition-opacity">
+                                <Button type="submit" disabled={isSubmitting} className="w-full sm:w-40 bg-gradient-to-r from-primary to-blue-600 hover:opacity-90 transition-opacity">
                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Submit Claim
                                 </Button>
