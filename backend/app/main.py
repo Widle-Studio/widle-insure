@@ -4,8 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.log_config import setup_logging
 
+import logging
 # Configure logging on startup
 setup_logging()
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -21,10 +24,43 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "Accept", "x-api-key"],
 )
 
+from fastapi import Request
+import time
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = time.time()
+    response = await call_next(request)
+    process_time = time.time() - start_time
+
+    logger.info(
+        f"{request.method} {request.url.path} "
+        f"- {response.status_code} - {process_time:.2f}s"
+    )
+
+    return response
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import Depends
+from app.core.database import get_db
+
 @app.get("/health")
-async def health_check():
-    """Returns the health status of the backend service."""
-    return {"status": "healthy", "service": "widle-insure-backend"}
+async def health_check(db: AsyncSession = Depends(get_db)):
+    # Check database connection
+    try:
+        from sqlalchemy import text
+        await db.execute(text("SELECT 1"))
+        db_status = "healthy"
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        db_status = "unhealthy"
+
+    return {
+        "status": "healthy",
+        "service": "widle-insure-backend",
+        "database": db_status,
+        "version": "0.1.0"
+    }
 
 @app.get("/")
 async def root():

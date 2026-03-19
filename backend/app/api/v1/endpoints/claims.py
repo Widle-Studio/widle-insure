@@ -11,12 +11,14 @@ from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+import uuid
 
 from app.core.database import get_db
 from app.core.security import get_api_key
 from app.models.claims import Claim, ClaimPhoto
 from app.schemas.claims import ClaimCreate, ClaimPhotoResponse, ClaimResponse
 from app.services.storage import storage_service
+from app.services.ai_service import ai_service
 
 router = APIRouter()
 
@@ -150,3 +152,47 @@ async def upload_claim_photo(
     await db.refresh(new_photo)
 
     return new_photo
+
+@router.post("/{claim_id}/analyze")
+async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
+    """Trigger AI analysis on claim photos"""
+    claim = await db.get(Claim, claim_id)
+    if not claim:
+        raise HTTPException(404, "Claim not found")
+
+    # We must explicitly query photos since db.get doesn't eagerly load relations
+    stmt = select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
+    result = await db.execute(stmt)
+    claim_with_photos = result.scalars().first()
+
+    if not claim_with_photos.photos:
+        raise HTTPException(400, "No photos to analyze")
+
+    # Get photo URLs
+    photo_urls = [photo.photo_url for photo in claim_with_photos.photos]
+
+    # Call AI service
+    analysis = await ai_service.assess_damage(
+        photo_urls=photo_urls,
+        vehicle_info={
+            "make": claim_with_photos.vehicle_make,
+            "model": claim_with_photos.vehicle_model,
+            "year": claim_with_photos.vehicle_year,
+        },
+        incident_info={
+            "description": claim_with_photos.incident_description,
+            "date": claim_with_photos.incident_date,
+        }
+    )
+
+    # Update claim with AI results
+    claim_with_photos.estimated_damage_cost = analysis["estimated_cost"]
+    claim_with_photos.status = "analyzed"
+
+    # Store AI analysis in photos
+    for photo in claim_with_photos.photos:
+        photo.ai_analysis = analysis
+
+    await db.commit()
+
+    return {"claim_id": claim_id, "analysis": analysis}

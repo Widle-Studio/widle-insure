@@ -8,7 +8,10 @@ from app.core.database import AsyncSessionLocal
 from app.models.claims import Claim
 
 
-async def seed_data():
+import argparse
+from app.models.claims import ClaimPhoto
+
+async def seed_data(count: int, with_photos: bool):
     async with AsyncSessionLocal() as session:
         # Check if data exists
         result = await session.execute(select(Claim))
@@ -16,11 +19,13 @@ async def seed_data():
             print("Data already exists. Skipping seed.")
             return
 
-        print("Seeding test claims...")
+        print(f"Seeding {count} test claims...")
         
-        claims = [
-            Claim(
-                id=uuid.uuid4(),
+        claims = []
+        for i in range(1, count + 1):
+            claim_id = uuid.uuid4()
+            claim = Claim(
+                id=claim_id,
                 policy_number="POL-123456789",
                 claim_number=f"CLM-2024-{i:03d}",
                 claimant_name=f"User {i}",
@@ -34,12 +39,26 @@ async def seed_data():
                 vehicle_model="Camry",
                 vehicle_year=2020,
                 status="pending"
-            ) for i in range(1, 11)
-        ]
-        
+            )
+            claims.append(claim)
+
+            if with_photos:
+                photo = ClaimPhoto(
+                    id=uuid.uuid4(),
+                    claim_id=claim_id,
+                    photo_url=f"http://example.com/mock-photo-{i}.jpg",
+                    photo_type="image/jpeg"
+                )
+                session.add(photo)
+
         session.add_all(claims)
         await session.commit()
         print(f"Successfully created {len(claims)} test claims.")
 
 if __name__ == "__main__":
-    asyncio.run(seed_data())
+    parser = argparse.ArgumentParser(description="Seed database with mock data.")
+    parser.add_argument("--count", type=int, default=10, help="Number of claims to create")
+    parser.add_argument("--with-photos", action="store_true", help="Include mock photos with claims")
+    args = parser.parse_args()
+
+    asyncio.run(seed_data(count=args.count, with_photos=args.with_photos))
