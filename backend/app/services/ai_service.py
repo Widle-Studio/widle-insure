@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 class ClaudeAIService:
     def __init__(self):
         self.client = Anthropic(api_key=settings.ANTHROPIC_API_KEY) if getattr(settings, 'ANTHROPIC_API_KEY', None) else None
-
     async def assess_damage(
         self,
         photo_urls: list[str],

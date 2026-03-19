@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.v1.endpoints import claims, policies
 from app.core.config import settings
 from app.core.log_config import setup_logging
 
@@ -33,10 +34,12 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     process_time = time.time() - start_time
 
+
     logger.info(
         f"{request.method} {request.url.path} "
         f"- {response.status_code} - {process_time:.2f}s"
     )
+
 
     return response
 
@@ -54,6 +57,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
         db_status = "unhealthy"
+
 
     return {
         "status": "healthy",

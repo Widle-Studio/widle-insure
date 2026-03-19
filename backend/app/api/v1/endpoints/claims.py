@@ -161,6 +161,7 @@ async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db))
     if not claim:
         raise HTTPException(404, "Claim not found")
 
+
     # We must explicitly query photos since db.get doesn't eagerly load relations
     stmt = select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
     result = await db.execute(stmt)

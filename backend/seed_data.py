@@ -42,6 +42,7 @@ async def seed_data(count: int, with_photos: bool):
             )
             claims.append(claim)
 
+
             if with_photos:
                 photo = ClaimPhoto(
                     id=uuid.uuid4(),

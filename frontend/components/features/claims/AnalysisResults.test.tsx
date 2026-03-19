@@ -34,6 +34,7 @@ describe('AnalysisResults', () => {
     expect(screen.getByText('Fraud Indicators Detected')).toBeInTheDocument();
     expect(screen.getByText('Mismatched damage pattern')).toBeInTheDocument();
 
+
     // Check reasoning
     expect(screen.getByText('Mock reasoning text')).toBeInTheDocument();
   });
