@@ -1,3 +1,4 @@
+import asyncio
 import os
 import secrets
 import uuid
@@ -6,6 +7,7 @@ from typing import Any
 
 import magic
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -75,12 +77,16 @@ async def get_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     """
     Get a claim by ID.
     """
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
+    # Fetch claim with eager loading of photos to avoid async compatibility issues
+    stmt = (
+        select(Claim)
+        .where(Claim.id == claim_id)
+        .options(selectinload(Claim.photos))
+    )
+    result = await db.execute(stmt)
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
-    # Helper to fetch photos eagerly if needed, or rely on lazy loading (async compatibility issue potentially)
-    # For now, let's assume simple access. If relationships fail in async, we need joinedload.
     return claim
 
 
@@ -97,16 +103,12 @@ async def upload_claim_photo(
     """
     Upload a photo for a claim.
     """
-    # 1. Validate File Type
-    if file.content_type not in ALLOWED_MIME_TYPES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Invalid file type: {file.content_type}. Allowed types: {', '.join(ALLOWED_MIME_TYPES)}",
-        )
-
-    # 1.5 Validate file contents via python-magic
+    # 1. Validate File Content Type via magic bytes
     file_content = await file.read(2048)
-    actual_mime_type = magic.from_buffer(file_content, mime=True)
+    # Offload the synchronous python-magic call to a thread to prevent blocking the async event loop
+    actual_mime_type = await asyncio.to_thread(
+        magic.from_buffer, file_content, mime=True
+    )
     await file.seek(0)
 
     if actual_mime_type not in ALLOWED_MIME_TYPES:
@@ -115,7 +117,7 @@ async def upload_claim_photo(
             detail=f"Invalid file content type: {actual_mime_type}. Allowed types: {', '.join(ALLOWED_MIME_TYPES)}",
         )
 
-    # 2. Validate File Extension
+    # 2. Validate File Extension (Strict enforcement to prevent unrestricted file upload)
     if not file.filename:
         raise HTTPException(status_code=400, detail="Filename missing")
 
@@ -123,14 +125,8 @@ async def upload_claim_photo(
     if ext.lower() not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid file extension: {ext}. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}",
+            detail=f"Security Policy Violation: Invalid file extension: {ext}. Allowed extensions: {', '.join(ALLOWED_EXTENSIONS)}",
         )
-
-    # Check if claim exists
-    result = await db.execute(select(Claim).where(Claim.id == claim_id))
-    claim = result.scalars().first()
-    if not claim:
-        raise HTTPException(status_code=404, detail="Claim not found")
 
     # Save file
     file_path = await storage_service.upload_file(file)
@@ -143,7 +139,14 @@ async def upload_claim_photo(
     )
 
     db.add(new_photo)
-    await db.commit()
+    try:
+        await db.commit()
+    except IntegrityError as exc:
+        await db.rollback()
+        # Clean up the orphaned file
+        await storage_service.delete_file(file_path)
+        raise HTTPException(status_code=404, detail="Claim not found") from exc
+
     await db.refresh(new_photo)
 
     return new_photo
