@@ -20,6 +20,15 @@ export default function ClaimDetailPage() {
     }, [params.id]);
 
     const handleAction = async (action: 'approve' | 'reject' | 'payout') => {
+        // User Experience: Add Confirmation Dialogs for destructive/important actions
+        const confirmMsg = action === 'reject'
+            ? "Are you sure you want to REJECT this claim? This action cannot be easily undone."
+            : action === 'approve'
+            ? "Are you sure you want to APPROVE this claim?"
+            : "Are you sure you want to initiate payout?";
+
+        if (!window.confirm(confirmMsg)) return;
+
         try {
             if (action === 'payout') {
                 const res = await apiClient.post(`/payments/${params.id}/payout`);

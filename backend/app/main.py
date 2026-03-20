@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+import sentry_sdk
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from app.api.v1.endpoints import claims, policies
 from app.core.config import settings
@@ -8,6 +11,19 @@ from app.core.log_config import setup_logging
 import logging
 # Configure logging on startup
 setup_logging()
+
+# Initialize Sentry error logging
+if settings.SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        enable_tracing=True,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        integrations=[
+            StarletteIntegration(transaction_style="endpoint"),
+            FastApiIntegration(transaction_style="endpoint"),
+        ],
+    )
 
 logger = logging.getLogger(__name__)
 

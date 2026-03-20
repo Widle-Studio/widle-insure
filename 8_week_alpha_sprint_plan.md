@@ -289,47 +289,47 @@ Day 5: Polish
 ### Backend Tasks:
 ```
 Day 1-2: Admin APIs
-[x] GET /api/v1/admin/claims - List all claims (paginated)
-[x] GET /api/v1/admin/claims/{id} - Claim details
-[x] PATCH /api/v1/admin/claims/{id}/status - Update status
-[x] POST /api/v1/admin/claims/{id}/approve - Approve claim
-[x] POST /api/v1/admin/claims/{id}/reject - Reject claim
-[x] Add filters (status, date range, amount)
+[ ] GET /api/v1/admin/claims - List all claims (paginated)
+[ ] GET /api/v1/admin/claims/{id} - Claim details
+[ ] PATCH /api/v1/admin/claims/{id}/status - Update status
+[ ] POST /api/v1/admin/claims/{id}/approve - Approve claim
+[ ] POST /api/v1/admin/claims/{id}/reject - Reject claim
+[ ] Add filters (status, date range, amount)
 
 Day 3-4: Admin Auth
-[x] Basic JWT authentication
-[x] Admin user table
-[x] Login endpoint
-[x] Protected routes middleware
+[ ] Basic JWT authentication
+[ ] Admin user table
+[ ] Login endpoint
+[ ] Protected routes middleware
 
 Day 5: Analytics
-[x] GET /api/v1/admin/analytics endpoint
-[x] Total claims, avg processing time
-[x] STP rate calculation
-[x] Cost statistics
+[ ] GET /api/v1/admin/analytics endpoint
+[ ] Total claims, avg processing time
+[ ] STP rate calculation
+[ ] Cost statistics
 ```
 
 ### Frontend Tasks:
 ```
 Day 1-2: Dashboard Layout
-[x] Admin sidebar navigation
-[x] Claims table (react-table or Tanstack Table)
-[x] Search and filter UI
-[x] Pagination controls
+[ ] Admin sidebar navigation
+[ ] Claims table (react-table or Tanstack Table)
+[ ] Search and filter UI
+[ ] Pagination controls
 
 Day 3-4: Claim Detail View
-[x] Full claim information display
-[x] Photo gallery
-[x] AI analysis results
-[x] Approve/Reject buttons
-[x] Add notes/comments
-[x] Audit log display
+[ ] Full claim information display
+[ ] Photo gallery
+[ ] AI analysis results
+[ ] Approve/Reject buttons
+[ ] Add notes/comments
+[ ] Audit log display
 
 Day 5: Analytics Dashboard
-[x] Key metrics cards (total claims, STP rate, avg cost)
-[x] Claims by status chart (pie chart)
-[x] Claims over time (line chart)
-[x] Use Recharts or Chart.js
+[ ] Key metrics cards (total claims, STP rate, avg cost)
+[ ] Claims by status chart (pie chart)
+[ ] Claims over time (line chart)
+[ ] Use Recharts or Chart.js
 ```
 
 **Week 4 Deliverables**:
@@ -350,34 +350,34 @@ Day 5: Analytics Dashboard
 ### Backend Tasks:
 ```
 Day 1-2: Adjudication Rules Engine
-[x] Create rules engine module
-[x] Auto-approve logic (with strict deterministic guardrails):
+[ ] Create rules engine module
+[ ] Auto-approve logic (with strict deterministic guardrails):
   - Damage < $2000 (Hard limit on AI authority)
   - Estimated cost <= (Policy Coverage Limit - Deductible)
   - No fraud flags (Fraud score < threshold)
   - Policy status must be 'Active'
   - High AI confidence (>90%)
   - ZERO AI-identified red flags
-[x] Human review queue logic:
+[ ] Human review queue logic:
   - Damage > $5000
   - Fraud indicators present
   - Low AI confidence (<70%)
   - Missing required info
 
 Day 3-4: Fraud Detection (Rule-Based)
-[x] Check for common fraud patterns:
+[ ] Check for common fraud patterns:
   - Claim submitted >30 days after incident
   - Multiple claims in short period
   - Damage inconsistent with incident description
   - Pre-existing damage detected
-[x] Assign fraud risk score (0-100)
-[x] Store fraud analysis in database
+[ ] Assign fraud risk score (0-100)
+[ ] Store fraud analysis in database
 
 Day 5: Integration
-[x] Run adjudication after AI analysis
-[x] Update claim status automatically
-[x] Create human review tasks
-[x] Send notifications (email for now)
+[ ] Run adjudication after AI analysis
+[ ] Update claim status automatically
+[ ] Create human review tasks
+[ ] Send notifications (email for now)
 ```
 
 ### Fraud Rules Example:
@@ -408,19 +408,19 @@ def calculate_fraud_score(claim):
 ### Frontend Tasks:
 ```
 Day 1-2: Human Review Queue
-[x] New "Review Queue" tab in admin
-[x] Claims requiring human attention
-[x] Priority sorting (fraud score, claim amount)
+[ ] New "Review Queue" tab in admin
+[ ] Claims requiring human attention
+[ ] Priority sorting (fraud score, claim amount)
 
 Day 3-4: Fraud Indicators Display
-[x] Show fraud score and risk level
-[x] Display specific red flags
-[x] Comparison tools (past claims, patterns)
+[ ] Show fraud score and risk level
+[ ] Display specific red flags
+[ ] Comparison tools (past claims, patterns)
 
 Day 5: Testing
-[x] Test with 30 varied claims
-[x] Verify auto-approval works correctly
-[x] Check fraud detection accuracy
+[ ] Test with 30 varied claims
+[ ] Verify auto-approval works correctly
+[ ] Check fraud detection accuracy
 ```
 
 **Week 5 Deliverables**:
@@ -441,26 +441,26 @@ Day 5: Testing
 ### Backend Tasks:
 ```
 Day 1-2: Stripe Setup
-[x] Install Stripe SDK
-[x] Set up Stripe account (test mode)
-[x] Create payment intent API
-[x] POST /api/v1/claims/{id}/payout endpoint
-[x] Handle Stripe webhooks
+[ ] Install Stripe SDK
+[ ] Set up Stripe account (test mode)
+[ ] Create payment intent API
+[ ] POST /api/v1/claims/{id}/payout endpoint
+[ ] Handle Stripe webhooks
 
 Day 3: Payout Logic
-[x] Validate approved claim status
-[x] Create Stripe transfer/ACH payout
-[x] Update claim with payout info
-[x] Generate payout confirmation number
+[ ] Validate approved claim status
+[ ] Create Stripe transfer/ACH payout
+[ ] Update claim with payout info
+[ ] Generate payout confirmation number
 
 Day 4-5: Email Notifications
-[x] Set up SendGrid or Resend
-[x] Email templates:
+[ ] Set up SendGrid or Resend
+[ ] Email templates:
   - Claim received
   - Claim approved
   - Payout initiated
   - Claim rejected (with reason)
-[x] Send emails at key stages
+[ ] Send emails at key stages
 ```
 
 ### Stripe Payout Flow:
@@ -493,19 +493,19 @@ async def initiate_payout(claim_id: str):
 ### Frontend Tasks:
 ```
 Day 1-2: Payout UI (Admin)
-[x] "Initiate Payout" button on approved claims
-[x] Payout confirmation modal
-[x] Display payout status
+[ ] "Initiate Payout" button on approved claims
+[ ] Payout confirmation modal
+[ ] Display payout status
 
 Day 3-4: Claimant Portal (Basic)
-[x] Simple claim status lookup page
-[x] Enter claim number to view status
-[x] Show payout details if approved
+[ ] Simple claim status lookup page
+[ ] Enter claim number to view status
+[ ] Show payout details if approved
 
 Day 5: Email Templates
-[x] Design email templates (HTML)
-[x] Test all email flows
-[x] Preview emails in different clients
+[ ] Design email templates (HTML)
+[ ] Test all email flows
+[ ] Preview emails in different clients
 ```
 
 **Week 6 Deliverables**:
