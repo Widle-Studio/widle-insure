@@ -441,26 +441,26 @@ Day 5: Testing
 ### Backend Tasks:
 ```
 Day 1-2: Stripe Setup
-[ ] Install Stripe SDK
-[ ] Set up Stripe account (test mode)
-[ ] Create payment intent API
-[ ] POST /api/v1/claims/{id}/payout endpoint
-[ ] Handle Stripe webhooks
+[x] Install Stripe SDK
+[x] Set up Stripe account (test mode)
+[x] Create payment intent API
+[x] POST /api/v1/claims/{id}/payout endpoint
+[x] Handle Stripe webhooks
 
 Day 3: Payout Logic
-[ ] Validate approved claim status
-[ ] Create Stripe transfer/ACH payout
-[ ] Update claim with payout info
-[ ] Generate payout confirmation number
+[x] Validate approved claim status
+[x] Create Stripe transfer/ACH payout
+[x] Update claim with payout info
+[x] Generate payout confirmation number
 
 Day 4-5: Email Notifications
-[ ] Set up SendGrid or Resend
-[ ] Email templates:
+[x] Set up SendGrid or Resend
+[x] Email templates:
   - Claim received
   - Claim approved
   - Payout initiated
   - Claim rejected (with reason)
-[ ] Send emails at key stages
+[x] Send emails at key stages
 ```
 
 ### Stripe Payout Flow:
@@ -493,19 +493,19 @@ async def initiate_payout(claim_id: str):
 ### Frontend Tasks:
 ```
 Day 1-2: Payout UI (Admin)
-[ ] "Initiate Payout" button on approved claims
-[ ] Payout confirmation modal
-[ ] Display payout status
+[x] "Initiate Payout" button on approved claims
+[x] Payout confirmation modal
+[x] Display payout status
 
 Day 3-4: Claimant Portal (Basic)
-[ ] Simple claim status lookup page
-[ ] Enter claim number to view status
-[ ] Show payout details if approved
+[x] Simple claim status lookup page
+[x] Enter claim number to view status
+[x] Show payout details if approved
 
 Day 5: Email Templates
-[ ] Design email templates (HTML)
-[ ] Test all email flows
-[ ] Preview emails in different clients
+[x] Design email templates (HTML)
+[x] Test all email flows
+[x] Preview emails in different clients
 ```
 
 **Week 6 Deliverables**:
