@@ -52,7 +52,7 @@ class ClaimPhoto(Base):
     __tablename__ = "claim_photos"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    claim_id = Column(Uuid(as_uuid=True), ForeignKey("claims.id"), nullable=False)
+    claim_id = Column(Uuid(as_uuid=True), ForeignKey("claims.id"), nullable=False, index=True)
     photo_url = Column(String, nullable=False)
     photo_type = Column(String, nullable=True)
     ai_analysis = Column(JSON, nullable=True)
@@ -64,7 +64,7 @@ class ClaimAuditLog(Base):
     __tablename__ = "claim_audit_log"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    claim_id = Column(Uuid(as_uuid=True), ForeignKey("claims.id"), nullable=False)
+    claim_id = Column(Uuid(as_uuid=True), ForeignKey("claims.id"), nullable=False, index=True)
     action = Column(String, nullable=False)
     performed_by = Column(String, nullable=True)
     details = Column(JSON, nullable=True)
