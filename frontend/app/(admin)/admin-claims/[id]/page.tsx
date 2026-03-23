@@ -11,11 +11,14 @@ export default function ClaimDetailPage() {
     const router = useRouter();
     const [claim, setClaim] = useState<any>(null);
 
-    useEffect(() => {
+    const fetchClaim = async () => {
         if (params.id) {
-            apiClient.get(`/admin/claims/${params.id}`)
-                .then(res => setClaim(res.data))
-                .catch(err => console.error(err));
+            try {
+                const res = await apiClient.get(`/admin/claims/${params.id}`);
+                setClaim(res.data);
+            } catch (err) {
+                console.error(err);
+            }
         }
 
         // Add keyboard shortcuts
@@ -61,6 +64,24 @@ export default function ClaimDetailPage() {
             alert(`Failed to ${action} claim`);
         }
     };
+
+    useEffect(() => {
+        // Add keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                handleAction('approve');
+            } else if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                handleAction('reject');
+            } else if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                handleAction('payout');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [claim]);
 
     if (!claim) return <div className="p-6">Loading...</div>;
 
