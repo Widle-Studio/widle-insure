@@ -27,10 +27,17 @@ if settings.SENTRY_DSN:
 
 logger = logging.getLogger(__name__)
 
+# Configure Rate Limiter
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 # Configure CORS based on environment settings
 app.add_middleware(

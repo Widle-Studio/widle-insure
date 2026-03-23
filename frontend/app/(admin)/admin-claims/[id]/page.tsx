@@ -17,6 +17,22 @@ export default function ClaimDetailPage() {
                 .then(res => setClaim(res.data))
                 .catch(err => console.error(err));
         }
+
+        // Add keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                handleAction('approve');
+            } else if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                handleAction('reject');
+            } else if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                handleAction('payout');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, [params.id]);
 
     const handleAction = async (action: 'approve' | 'reject' | 'payout') => {
@@ -52,14 +68,14 @@ export default function ClaimDetailPage() {
         <div className="space-y-6 p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Claim: {claim.claim_number}</h1>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Claim Actions">
                     {claim.status === "Approved" && (
-                        <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white">Initiate Payout</Button>
+                        <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white" aria-label="Initiate Payout (Ctrl+P)" title="Ctrl+P">Initiate Payout</Button>
                     )}
                     {claim.status !== "Approved" && claim.status !== "Rejected" && claim.status !== "Paid" && (
                         <>
-                            <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white">Approve</Button>
-                            <Button onClick={() => handleAction('reject')} variant="destructive">Reject</Button>
+                            <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white" aria-label="Approve Claim (Ctrl+A)" title="Ctrl+A">Approve</Button>
+                            <Button onClick={() => handleAction('reject')} variant="destructive" aria-label="Reject Claim (Ctrl+R)" title="Ctrl+R">Reject</Button>
                         </>
                     )}
                 </div>
