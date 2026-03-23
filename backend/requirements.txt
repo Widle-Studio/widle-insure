@@ -31,4 +31,3 @@ stripe==8.0.0
 # Add for Week 7 Performance & Monitoring
 sentry-sdk[fastapi]==1.40.6
 redis==5.0.1
-slowapi==0.1.9
