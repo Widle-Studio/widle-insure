@@ -1,4 +1,4 @@
-fastapi==0.109.0
+fastapi[all]==0.109.0
 uvicorn[standard]==0.27.0
 sqlalchemy[asyncio]==2.0.25
 alembic==1.13.1
@@ -14,4 +14,20 @@ pre-commit==3.6.0
 python-multipart==0.0.22
 aiofiles==25.1.0
 python-magic==0.4.27
-anthropic>=0.42.0
+passlib==1.7.4
+bcrypt==4.1.2
+python-jose[cryptography]==3.5.0
+# Add for Week 3 AI Integration
+anthropic==0.18.1
+openai==1.12.0
+
+# Add for Week 6 Email
+sendgrid==6.10.0
+resend==0.7.0
+
+# Add for Week 6 Payments
+stripe==8.0.0
+
+# Add for Week 7 Performance & Monitoring
+sentry-sdk[fastapi]==1.40.6
+redis==5.0.1

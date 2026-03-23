@@ -78,4 +78,9 @@ describe('Step2Incident', () => {
         expect(screen.queryByText('Location is required')).not.toBeInTheDocument();
         expect(screen.queryByText('Description is required')).not.toBeInTheDocument();
     });
+
+    it('matches the snapshot for Step2Incident', () => {
+        const { asFragment } = render(<Step2Incident form={getMockForm()} />);
+        expect(asFragment()).toMatchSnapshot();
+    });
 });

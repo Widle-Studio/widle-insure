@@ -1,8 +1,7 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import field_validator
-from typing import Optional, List, Union
+from typing import List, Optional, Union
 
-from pydantic_settings import BaseSettings
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -16,6 +15,15 @@ class Settings(BaseSettings):
     BACKEND_CORS_ORIGINS: Union[str, List[str]] = []
 
     DEBUG: bool = False
+
+    # Maximum upload file size (default 50MB)
+    MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024
+
+    # Sentry DSN for error logging
+    SENTRY_DSN: Optional[str] = None
+
+    # Redis Cache
+    REDIS_URL: str = "redis://localhost:6379"
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod

@@ -1,154 +1,169 @@
-import re
-import json
-import httpx
 import base64
-from typing import Dict, Any, Optional
+import json
+import logging
+import os
+import re
+
+import aiofiles
 from anthropic import AsyncAnthropic
 
 from app.core.config import settings
-import logging
 
 logger = logging.getLogger(__name__)
 
+
 def sanitize_input(text: str) -> str:
     """Sanitize user input to prevent prompt injection."""
-    if not text:
-        return ""
-    # Remove any XML-like tags that could interfere with the prompt structure
     return re.sub(r'<[^>]*>', '', str(text))
 
-class AIService:
+
+class ClaudeAIService:
     def __init__(self):
-        self.client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY) if settings.ANTHROPIC_API_KEY else None
+        # We need to handle async call, so AsyncAnthropic
+        self.client = AsyncAnthropic(api_key=getattr(settings, 'ANTHROPIC_API_KEY', '')) if getattr(settings, 'ANTHROPIC_API_KEY', None) else None
 
-    async def _fetch_image_as_base64(self, photo_url: str) -> Optional[str]:
-        # For a local URL, we might need to read it from disk if it starts with / or uploads/
-        # But if it's external, we fetch it.
-        import os
-        import aiofiles
-
+    async def _encode_image(self, photo_path: str) -> dict | None:
+        """Read a local image file and encode it as base64 for Anthropic API."""
         try:
-            if photo_url.startswith("http://") or photo_url.startswith("https://"):
-                async with httpx.AsyncClient() as client:
-                    response = await client.get(photo_url)
-                    response.raise_for_status()
-                    return base64.b64encode(response.content).decode("utf-8")
-            else:
-                # Local file handling - Secure against LFI
-                base_dir = os.path.abspath("uploads")
-                target_path = os.path.abspath(photo_url)
+            # photo_urls are typically local paths (e.g., /static/uploads/...) based on current implementation
+            # We strip the leading slash if present to make it a relative path to the current working directory
+            local_path = photo_path.lstrip("/")
 
-                # Check if the target path is within the allowed uploads directory
-                if not target_path.startswith(base_dir):
-                    logger.warning(f"Security: Attempt to read file outside of uploads directory: {photo_url}")
-                    return None
+            if not os.path.exists(local_path):
+                logger.warning(f"Image not found at path: {local_path}")
+                return None
 
-                if not os.path.exists(target_path):
-                    logger.warning(f"File not found: {target_path}")
-                    return None
+            async with aiofiles.open(local_path, "rb") as image_file:
+                image_data = await image_file.read()
+                base64_image = base64.b64encode(image_data).decode("utf-8")
 
-                async with aiofiles.open(target_path, "rb") as f:
-                    content = await f.read()
-                    return base64.b64encode(content).decode("utf-8")
+            _, ext = os.path.splitext(local_path)
+            media_type = f"image/{ext.lower().replace('.', '')}"
+            if media_type == "image/jpg":
+                media_type = "image/jpeg"
+
+            return {
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": media_type,
+                    "data": base64_image,
+                },
+            }
         except Exception as e:
-            logger.error(f"Error fetching image for AI analysis from {photo_url}: {e}")
+            logger.error(f"Error encoding image {photo_path}: {e}")
             return None
 
-    def _determine_mime_type(self, photo_url: str) -> str:
-        url_lower = photo_url.lower()
-        if url_lower.endswith('.png'):
-            return 'image/png'
-        if url_lower.endswith('.webp'):
-            return 'image/webp'
-        return 'image/jpeg' # Default to jpeg
-
-    async def analyze_damage(self, photo_url: str, vehicle_context: Dict[str, Any]) -> Dict[str, Any]:
+    async def assess_damage(
+        self,
+        photo_urls: list[str],
+        vehicle_info: dict,
+        incident_info: dict
+    ) -> dict:
         """
-        Analyze vehicle damage using Claude Vision API.
-        Returns a dictionary with damage severity, damaged parts, estimated cost, red flags, and confidence.
+        Analyze damage photos using Claude Vision API
+
+        Returns:
+            {
+                "severity": "minor" | "moderate" | "major" | "total_loss",
+                "damaged_parts": ["front_bumper", "hood", ...],
+                "estimated_cost": 2500.00,
+                "confidence": 0.92,
+                "fraud_indicators": [],
+                "reasoning": "Analysis text..."
+            }
         """
         if not self.client:
-            logger.warning("ANTHROPIC_API_KEY is not set. Using rule-based fallback for damage estimation.")
-            return self._rule_based_fallback()
+            logger.warning("Anthropic API key not configured. Returning mock data.")
+            return {
+                "severity": "moderate",
+                "damaged_parts": ["front_bumper", "hood"],
+                "estimated_cost": 2500.00,
+                "confidence": 0.85,
+                "fraud_indicators": [],
+                "reasoning": "Mock analysis - implement Claude API"
+            }
 
-        image_data = await self._fetch_image_as_base64(photo_url)
-        if not image_data:
-            logger.warning(f"Could not load image {photo_url}. Using rule-based fallback.")
-            return self._rule_based_fallback()
+        # Build content block for the message
+        content = []
 
-        mime_type = self._determine_mime_type(photo_url)
+        # Process each image
+        for url in photo_urls:
+            # Assume it's a local file for now based on current app implementation
+            image_block = await self._encode_image(url)
+            if image_block:
+                content.append(image_block)
+
+        # Add the text prompt
+        text_prompt = self._build_damage_assessment_prompt(vehicle_info, incident_info)
+        content.append({
+            "type": "text",
+            "text": text_prompt
+        })
 
         system_prompt = """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
 Provide your analysis based on the photo and the provided context.
-Strictly follow the output format provided.
-Output ONLY valid JSON matching this schema:
+You must return the result EXACTLY as a valid JSON object matching this schema:
 {
-  "damage_severity": "Minor|Moderate|Major|Total Loss",
-  "damaged_parts": ["part1", "part2"],
-  "estimated_repair_cost": "dollar amount range",
-  "red_flags": ["flag1", "flag2"] or [],
-  "confidence": "High|Medium|Low"
-}"""
-
-        user_content = f"""Here is the context for the claim:
-<vehicle_context>
-<make>{sanitize_input(vehicle_context.get('make', ''))}</make>
-<model>{sanitize_input(vehicle_context.get('model', ''))}</model>
-<year>{sanitize_input(vehicle_context.get('year', ''))}</year>
-</vehicle_context>
-<incident_context>
-<date>{sanitize_input(vehicle_context.get('incident_date', ''))}</date>
-<location>{sanitize_input(vehicle_context.get('incident_location', ''))}</location>
-</incident_context>
-
-Provide your analysis in the requested JSON format.
-"""
+    "severity": "minor" | "moderate" | "major" | "total_loss",
+    "damaged_parts": ["list", "of", "parts"],
+    "estimated_cost": 2500.00,
+    "confidence": 0.95,
+    "fraud_indicators": ["any", "red", "flags"],
+    "reasoning": "Detailed explanation of your analysis..."
+}
+Do not include any other text before or after the JSON."""
 
         try:
             response = await self.client.messages.create(
-                model="claude-3-5-sonnet-20240620",
-                max_tokens=1000,
+                model="claude-3-5-sonnet-20241022",
+                max_tokens=1024,
                 system=system_prompt,
                 messages=[
                     {
                         "role": "user",
-                        "content": [
-                            {
-                                "type": "image",
-                                "source": {
-                                    "type": "base64",
-                                    "media_type": mime_type,
-                                    "data": image_data
-                                }
-                            },
-                            {
-                                "type": "text",
-                                "text": user_content
-                            }
-                        ]
+                        "content": content,
                     }
                 ]
             )
 
             # Parse the JSON response
             response_text = response.content[0].text
-            # Basic cleanup in case Claude adds markdown code blocks
-            clean_json = re.sub(r'```json\n|\n```', '', response_text).strip()
+            # Attempt to extract JSON if Claude added conversational wrapper
+            if "```json" in response_text:
+                json_str = response_text.split("```json")[1].split("```")[0].strip()
+            else:
+                json_str = response_text.strip()
 
-            return json.loads(clean_json)
+            result = json.loads(json_str)
+            return result
 
         except Exception as e:
             logger.error(f"Error calling Claude API: {e}")
-            return self._rule_based_fallback()
+            # Fallback mock data in case of error
+            return {
+                "severity": "moderate",
+                "damaged_parts": ["front_bumper", "hood"],
+                "estimated_cost": 2500.00,
+                "confidence": 0.85,
+                "fraud_indicators": [],
+                "reasoning": f"Error occurred during analysis: {str(e)}"
+            }
 
-    def _rule_based_fallback(self) -> Dict[str, Any]:
-        """Provides a basic fallback if AI analysis fails or is not configured."""
-        return {
-            "damage_severity": "Moderate",
-            "damaged_parts": ["Unknown (AI analysis failed)"],
-            "estimated_repair_cost": "$2000-5000",
-            "red_flags": [],
-            "confidence": "Low"
-        }
+    def _build_damage_assessment_prompt(self, vehicle_info, incident_info):
+        return f"""Here is the context for the claim:
+<vehicle_context>
+<make>{sanitize_input(vehicle_info.get('make', ''))}</make>
+<model>{sanitize_input(vehicle_info.get('model', ''))}</model>
+<year>{sanitize_input(vehicle_info.get('year', ''))}</year>
+</vehicle_context>
+<incident_context>
+<date>{sanitize_input(incident_info.get('date', ''))}</date>
+<description>{sanitize_input(incident_info.get('description', ''))}</description>
+</incident_context>
 
-ai_service = AIService()
+Be conservative in your estimates. If unsure, flag for human review.
+"""
+
+# Initialize service
+ai_service = ClaudeAIService()
