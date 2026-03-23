@@ -18,6 +18,12 @@ class Settings(BaseSettings):
     # Maximum upload file size (default 50MB)
     MAX_UPLOAD_SIZE: int = 50 * 1024 * 1024
 
+    # Sentry DSN for error logging
+    SENTRY_DSN: Optional[str] = None
+
+    # Redis Cache
+    REDIS_URL: str = "redis://localhost:6379"
+
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
