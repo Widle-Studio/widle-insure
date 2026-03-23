@@ -1,4 +1,9 @@
 [project]
+name = "widle-insure-api"
+version = "0.1.0"
+description = "FastAPI backend for AI auto insurance claims platform"
+readme = "README.md"
+requires-python = ">=3.11"
 name = "widle-insure"
 version = "0.1.0"
 description = "Widle Insure Backend"
