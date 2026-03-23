@@ -8,15 +8,25 @@ import { apiClient } from "@/lib/api-client";
 
 export default function AdminClaimsPage() {
     const [claims, setClaims] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         apiClient.get("/admin/claims")
             .then(res => setClaims(res.data))
-            .catch(err => console.error(err));
+            .catch(err => console.error(err))
+            .finally(() => setLoading(false));
     }, []);
 
     return (
         <div className="space-y-6 p-6">
+            {loading && (
+                <div className="space-y-4">
+                    <div className="h-8 w-64 animate-pulse rounded-md bg-slate-200 dark:bg-slate-800" />
+                    <div className="h-[400px] w-full animate-pulse rounded-md bg-slate-200 dark:bg-slate-800" />
+                </div>
+            )}
+            {!loading && (
+                <>
             <h1 className="text-3xl font-bold tracking-tight">Claims Management</h1>
             <Card>
                 <CardHeader>
@@ -61,6 +71,8 @@ export default function AdminClaimsPage() {
                     </div>
                 </CardContent>
             </Card>
+            </>
+            )}
         </div>
     );
 }
