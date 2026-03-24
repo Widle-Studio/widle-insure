@@ -12,21 +12,38 @@ export default function ClaimDetailPage() {
     const [claim, setClaim] = useState<any>(null);
 
     useEffect(() => {
-        if (params.id) {
-            apiClient.get(`/admin/claims/${params.id}`)
-                .then(res => setClaim(res.data))
-                .catch(err => console.error(err));
-        }
+        const fetchClaim = async () => {
+            const claimId = params.id;
+            if (claimId) {
+                try {
+                    const res = await apiClient.get(`/admin/claims/${claimId}`);
+                    setClaim(res.data);
+                } catch (err) {
+                    console.error(err);
+                }
+            }
+        };
+        fetchClaim();
     }, [params.id]);
 
     const handleAction = async (action: 'approve' | 'reject' | 'payout') => {
+        // User Experience: Add Confirmation Dialogs for destructive/important actions
+        const confirmMsg = action === 'reject'
+            ? "Are you sure you want to REJECT this claim? This action cannot be easily undone."
+            : action === 'approve'
+            ? "Are you sure you want to APPROVE this claim?"
+            : "Are you sure you want to initiate payout?";
+
+        if (!window.confirm(confirmMsg)) return;
+
         try {
+            const claimId = params.id;
             if (action === 'payout') {
-                const res = await apiClient.post(`/payments/${params.id}/payout`);
+                const res = await apiClient.post(`/payments/${claimId}/payout`);
                 setClaim(res.data);
                 alert(`Claim payout initiated successfully`);
             } else {
-                const res = await apiClient.post(`/admin/claims/${params.id}/${action}`);
+                const res = await apiClient.post(`/admin/claims/${claimId}/${action}`);
                 setClaim(res.data);
                 alert(`Claim successfully ${action}ed`);
             }
@@ -37,20 +54,38 @@ export default function ClaimDetailPage() {
         }
     };
 
+    useEffect(() => {
+        // Add keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                handleAction('approve');
+            } else if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                handleAction('reject');
+            } else if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                handleAction('payout');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [claim, params.id, router]); // eslint-disable-line react-hooks/exhaustive-deps
+
     if (!claim) return <div className="p-6">Loading...</div>;
 
     return (
         <div className="space-y-6 p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Claim: {claim.claim_number}</h1>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Claim Actions">
                     {claim.status === "Approved" && (
-                        <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white">Initiate Payout</Button>
+                        <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white" aria-label="Initiate Payout (Ctrl+P)" title="Ctrl+P">Initiate Payout</Button>
                     )}
                     {claim.status !== "Approved" && claim.status !== "Rejected" && claim.status !== "Paid" && (
                         <>
-                            <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white">Approve</Button>
-                            <Button onClick={() => handleAction('reject')} variant="destructive">Reject</Button>
+                            <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white" aria-label="Approve Claim (Ctrl+A)" title="Ctrl+A">Approve</Button>
+                            <Button onClick={() => handleAction('reject')} variant="destructive" aria-label="Reject Claim (Ctrl+R)" title="Ctrl+R">Reject</Button>
                         </>
                     )}
                 </div>
