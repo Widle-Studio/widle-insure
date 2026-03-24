@@ -11,19 +11,31 @@ export default function ClaimDetailPage() {
     const router = useRouter();
     const [claim, setClaim] = useState<any>(null);
 
-    useEffect(() => {
-        const fetchClaim = async () => {
-            const claimId = params.id;
-            if (claimId) {
-                try {
-                    const res = await apiClient.get(`/admin/claims/${claimId}`);
-                    setClaim(res.data);
-                } catch (err) {
-                    console.error(err);
-                }
+    const fetchClaim = async () => {
+        if (params.id) {
+            try {
+                const res = await apiClient.get(`/admin/claims/${params.id}`);
+                setClaim(res.data);
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Add keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                handleAction('approve');
+            } else if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                handleAction('reject');
+            } else if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                handleAction('payout');
             }
         };
-        fetchClaim();
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, [params.id]);
 
     const handleAction = async (action: 'approve' | 'reject' | 'payout') => {
@@ -70,7 +82,7 @@ export default function ClaimDetailPage() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [claim, params.id, router]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [claim]);
 
     if (!claim) return <div className="p-6">Loading...</div>;
 
