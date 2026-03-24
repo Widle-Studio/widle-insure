@@ -20,11 +20,22 @@ export default function ClaimDetailPage() {
                 console.error(err);
             }
         }
-    };
 
-    useEffect(() => {
-        fetchClaim();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // Add keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key === 'a') {
+                e.preventDefault();
+                handleAction('approve');
+            } else if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                handleAction('reject');
+            } else if (e.ctrlKey && e.key === 'p') {
+                e.preventDefault();
+                handleAction('payout');
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, [params.id]);
 
     const handleAction = async (action: 'approve' | 'reject' | 'payout') => {
@@ -70,7 +81,6 @@ export default function ClaimDetailPage() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [claim]);
 
     if (!claim) return <div className="p-6">Loading...</div>;

@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str # No default value, required from environment
     API_KEY: str # No default value, required from environment
+    ANTHROPIC_API_KEY: Optional[str] = None
     
     # CORS Origins (default empty list, allowing strict configuration)
     BACKEND_CORS_ORIGINS: Union[str, List[str]] = []
