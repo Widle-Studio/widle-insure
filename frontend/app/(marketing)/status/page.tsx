@@ -22,7 +22,7 @@ export default function ClaimStatusPage() {
         try {
             const res = await apiClient.get(`/claims/lookup/${claimNumber}`);
             setClaim(res.data);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
             setError("Claim not found or an error occurred.");
         } finally {
