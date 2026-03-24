@@ -49,12 +49,13 @@ export default function ClaimDetailPage() {
         if (!window.confirm(confirmMsg)) return;
 
         try {
+            const claimId = params.id;
             if (action === 'payout') {
-                const res = await apiClient.post(`/payments/${params.id}/payout`);
+                const res = await apiClient.post(`/payments/${claimId}/payout`);
                 setClaim(res.data);
                 alert(`Claim payout initiated successfully`);
             } else {
-                const res = await apiClient.post(`/admin/claims/${params.id}/${action}`);
+                const res = await apiClient.post(`/admin/claims/${claimId}/${action}`);
                 setClaim(res.data);
                 alert(`Claim successfully ${action}ed`);
             }
