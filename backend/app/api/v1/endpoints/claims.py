@@ -238,14 +238,14 @@ async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db))
     if new_status == "Approved":
         claim_with_photos.approved_amount = claim_with_photos.estimated_damage_cost
         email_body = f"Your claim {claim_with_photos.claim_number} has been automatically approved for ${claim_with_photos.approved_amount}!"
-        email_service.send_email(
+        await email_service.send_email(
             to=claim_with_photos.claimant_email,
             subject="Claim Approved",
             body=email_body
         )
     elif new_status == "Manual Review":
         email_body = f"Your claim {claim_with_photos.claim_number} is currently under manual review."
-        email_service.send_email(
+        await email_service.send_email(
             to=claim_with_photos.claimant_email,
             subject="Claim Under Review",
             body=email_body
