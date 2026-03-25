@@ -9,8 +9,8 @@ logger = logging.getLogger(__name__)
 
 class EmailService:
     def __init__(self):
-        if settings.RESEND_API_KEY:
-            resend.api_key = settings.RESEND_API_KEY
+        if getattr(settings, "RESEND_API_KEY", None):
+            resend.api_key = getattr(settings, "RESEND_API_KEY", None)
             self.enabled = True
         else:
             self.enabled = False
@@ -24,7 +24,7 @@ class EmailService:
             try:
                 # Wrap sync resend call in an async thread to prevent blocking FastAPI's event loop
                 params = {
-                    "from": settings.EMAIL_FROM,
+                    "from": getattr(settings, "EMAIL_FROM", "test@example.com"),
                     "to": [to],
                     "subject": subject,
                     "html": body
