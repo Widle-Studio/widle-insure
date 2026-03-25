@@ -17,8 +17,8 @@ export default function MarketingPage() {
                         <Button size="lg" className="shadow-material-2 w-full sm:w-auto" asChild>
                             <a href="/login">Get Started</a>
                         </Button>
-                        <Button variant="outline" size="lg" className="shadow-material-1 w-full sm:w-auto">
-                            Learn More
+                        <Button variant="outline" size="lg" className="shadow-material-1 w-full sm:w-auto" asChild>
+                            <a href="/login">Demo Account</a>
                         </Button>
                     </div>
                 </div>

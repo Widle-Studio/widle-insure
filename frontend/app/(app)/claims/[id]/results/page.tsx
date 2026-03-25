@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export default function ClaimResultsPage() {
-    const params = useParams();
+export default function ClaimResultsPage({ params }: { params: { id: string } }) {
     const [claim, setClaim] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const claimIdStr = params.id;
 
     useEffect(() => {
-        if (params.id) {
+        if (claimIdStr) {
             const fetchClaim = async () => {
                 try {
-                    const res = await apiClient.get(`/api/v1/claims/${params.id}`);
+                    const res = await apiClient.get(`/api/v1/claims/${claimIdStr}`);
                     setClaim(res.data);
                 } catch (err) {
                     console.error(err);
@@ -27,7 +26,7 @@ export default function ClaimResultsPage() {
             };
             fetchClaim();
         }
-    }, [params.id]);
+    }, [claimIdStr]);
 
     if (loading || !claim) {
         return (

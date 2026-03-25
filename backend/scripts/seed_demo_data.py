@@ -2,8 +2,9 @@ import asyncio
 import os
 import random
 import uuid
+import secrets
+import string
 from datetime import datetime, timedelta
-import argparse
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -41,8 +42,8 @@ descriptions = [
     "Sideswiped by another vehicle merging onto the freeway.", "Front bumper damaged from hitting a high curb."
 ]
 
-async def create_demo_data(num_claims=50):
-    """Seeds the database with realistic test claims for Demo & Performance testing."""
+async def create_demo_data():
+    """Seeds the database with 50 realistic test claims for Week 7."""
     print(f"Connecting to database: {settings.SQLALCHEMY_DATABASE_URI}")
     engine = create_async_engine(settings.SQLALCHEMY_DATABASE_URI)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
@@ -51,13 +52,25 @@ async def create_demo_data(num_claims=50):
         try:
             # 1. Ensure an admin user exists
             from sqlalchemy.future import select
-            result = await db.execute(select(AdminUser).where(AdminUser.email == "admin@widle.com"))
+
+            admin_email = settings.FIRST_ADMIN_EMAIL
+            admin_password = settings.FIRST_ADMIN_PASSWORD
+
+            if not admin_password:
+                # Generate a secure random password if not provided
+                alphabet = string.ascii_letters + string.digits
+                admin_password = ''.join(secrets.choice(alphabet) for i in range(12))
+                password_info = f"Generated password: {admin_password}"
+            else:
+                password_info = "Using password from environment"
+
+            result = await db.execute(select(AdminUser).where(AdminUser.email == admin_email))
             admin = result.scalars().first()
             if not admin:
-                print("Creating default admin user (admin@widle.com / admin123)...")
+                print(f"Creating default admin user ({admin_email}). {password_info}")
                 new_admin = AdminUser(
-                    email="admin@widle.com",
-                    hashed_password=get_password_hash("admin123"),
+                    email=admin_email,
+                    hashed_password=get_password_hash(admin_password),
                     full_name="System Admin",
                     is_active=True,
                     is_superuser=True
@@ -65,11 +78,11 @@ async def create_demo_data(num_claims=50):
                 db.add(new_admin)
                 await db.commit()
 
-            # 2. Generate N claims
-            print(f"Generating {num_claims} demo claims...")
+            # 2. Generate 50 claims
+            print("Generating 50 demo claims...")
             claims_created = 0
 
-            for i in range(num_claims):
+            for i in range(50):
                 # Randomize claim details
                 make = random.choice(list(makes_models.keys()))
                 model = random.choice(makes_models[make])
@@ -150,8 +163,4 @@ async def create_demo_data(num_claims=50):
             raise e
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Seed demo data for Widle Insure")
-    parser.add_argument("--count", type=int, default=50, help="Number of claims to generate (e.g., 100 for performance testing)")
-    args = parser.parse_args()
-
-    asyncio.run(create_demo_data(num_claims=args.count))
+    asyncio.run(create_demo_data())

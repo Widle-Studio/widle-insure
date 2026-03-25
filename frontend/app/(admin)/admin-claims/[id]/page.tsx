@@ -1,32 +1,50 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { apiClient } from "@/lib/api-client";
 
-export default function ClaimDetailPage() {
-    const params = useParams();
+export default function ClaimDetailPage({ params }: { params: { id: string } }) {
     const router = useRouter();
     const [claim, setClaim] = useState<any>(null);
+    const claimIdStr = params.id;
+
+    const fetchClaim = useCallback(async () => {
+        if (!claimIdStr) return;
+        try {
+            const res = await apiClient.get(`/admin/claims/${claimIdStr}`);
+            setClaim(res.data);
+        } catch (err) {
+            console.error("Failed to fetch claim:", err);
+        }
+    }, [claimIdStr]);
 
     useEffect(() => {
-        if (params.id) {
-            apiClient.get(`/admin/claims/${params.id}`)
-                .then(res => setClaim(res.data))
-                .catch(err => console.error(err));
-        }
-    }, [params.id]);
+        fetchClaim();
+    }, [fetchClaim]);
 
-    const handleAction = async (action: 'approve' | 'reject' | 'payout') => {
+    const handleAction = useCallback(async (action: 'approve' | 'reject' | 'payout') => {
+        if (!claimIdStr) return;
+
+        // User Experience: Add Confirmation Dialogs for destructive/important actions
+        const confirmMsg = action === 'reject'
+            ? "Are you sure you want to REJECT this claim? This action cannot be easily undone."
+            : action === 'approve'
+            ? "Are you sure you want to APPROVE this claim?"
+            : "Are you sure you want to initiate payout?";
+
+        if (!window.confirm(confirmMsg)) return;
+
         try {
             if (action === 'payout') {
-                const res = await apiClient.post(`/payments/${params.id}/payout`);
+                const res = await apiClient.post(`/payments/${claimIdStr}/payout`);
                 setClaim(res.data);
                 alert(`Claim payout initiated successfully`);
             } else {
-                const res = await apiClient.post(`/admin/claims/${params.id}/${action}`);
+                const res = await apiClient.post(`/admin/claims/${claimIdStr}/${action}`);
                 setClaim(res.data);
                 alert(`Claim successfully ${action}ed`);
             }
@@ -35,7 +53,30 @@ export default function ClaimDetailPage() {
             console.error(error);
             alert(`Failed to ${action} claim`);
         }
-    };
+    }, [claimIdStr, router]);
+
+    useEffect(() => {
+        // Add keyboard shortcuts
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (!e.ctrlKey) return;
+
+            if (e.key === 'a') {
+                e.preventDefault();
+                handleAction('approve');
+            } else if (e.key === 'r') {
+                e.preventDefault();
+                handleAction('reject');
+            } else if (e.key === 'p') {
+                e.preventDefault();
+                handleAction('payout');
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [handleAction]);
 
     if (!claim) return <div className="p-6">Loading...</div>;
 
@@ -43,14 +84,14 @@ export default function ClaimDetailPage() {
         <div className="space-y-6 p-6">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Claim: {claim.claim_number}</h1>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2" role="group" aria-label="Claim Actions">
                     {claim.status === "Approved" && (
-                        <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white">Initiate Payout</Button>
+                        <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white" aria-label="Initiate Payout (Ctrl+P)" title="Ctrl+P">Initiate Payout</Button>
                     )}
                     {claim.status !== "Approved" && claim.status !== "Rejected" && claim.status !== "Paid" && (
                         <>
-                            <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white">Approve</Button>
-                            <Button onClick={() => handleAction('reject')} variant="destructive">Reject</Button>
+                            <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white" aria-label="Approve Claim (Ctrl+A)" title="Ctrl+A">Approve</Button>
+                            <Button onClick={() => handleAction('reject')} variant="destructive" aria-label="Reject Claim (Ctrl+R)" title="Ctrl+R">Reject</Button>
                         </>
                     )}
                 </div>
