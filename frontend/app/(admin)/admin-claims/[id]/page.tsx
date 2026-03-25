@@ -85,32 +85,15 @@ export default function ClaimDetailPage({ params }: { params: { id: string } }) 
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Claim: {claim.claim_number}</h1>
                 <div className="flex flex-wrap gap-2" role="group" aria-label="Claim Actions">
-                    <TooltipProvider>
-                        {claim.status === "Approved" && (
-                            <Tooltip>
-                                <TooltipTrigger asChild>
-                                    <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white" aria-label="Initiate Payout (Ctrl+P)">Initiate Payout</Button>
-                                </TooltipTrigger>
-                                <TooltipContent>Initiate Payout (Ctrl+P)</TooltipContent>
-                            </Tooltip>
-                        )}
-                        {claim.status !== "Approved" && claim.status !== "Rejected" && claim.status !== "Paid" && (
-                            <>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white" aria-label="Approve Claim (Ctrl+A)">Approve</Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Approve Claim (Ctrl+A)</TooltipContent>
-                                </Tooltip>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Button onClick={() => handleAction('reject')} variant="destructive" aria-label="Reject Claim (Ctrl+R)">Reject</Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Reject Claim (Ctrl+R)</TooltipContent>
-                                </Tooltip>
-                            </>
-                        )}
-                    </TooltipProvider>
+                    {claim.status === "Approved" && (
+                        <Button onClick={() => handleAction('payout')} className="bg-blue-600 hover:bg-blue-700 text-white" aria-label="Initiate Payout (Ctrl+P)" title="Ctrl+P">Initiate Payout</Button>
+                    )}
+                    {claim.status !== "Approved" && claim.status !== "Rejected" && claim.status !== "Paid" && (
+                        <>
+                            <Button onClick={() => handleAction('approve')} className="bg-green-600 hover:bg-green-700 text-white" aria-label="Approve Claim (Ctrl+A)" title="Ctrl+A">Approve</Button>
+                            <Button onClick={() => handleAction('reject')} variant="destructive" aria-label="Reject Claim (Ctrl+R)" title="Ctrl+R">Reject</Button>
+                        </>
+                    )}
                 </div>
             </div>
 
