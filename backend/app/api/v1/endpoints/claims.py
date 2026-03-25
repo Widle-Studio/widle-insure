@@ -153,33 +153,11 @@ async def upload_claim_photo(
     # Save file
     file_path = await storage_service.upload_file(file)
 
-    # Retrieve Claim to get vehicle context for AI analysis
-    claim_stmt = select(Claim).where(Claim.id == claim_id)
-    claim_result = await db.execute(claim_stmt)
-    claim = claim_result.scalars().first()
-
-    if not claim:
-        # Clean up file since claim is missing
-        await storage_service.delete_file(file_path)
-        raise HTTPException(status_code=404, detail="Claim not found")
-
-    vehicle_context = {
-        "make": claim.vehicle_make,
-        "model": claim.vehicle_model,
-        "year": claim.vehicle_year,
-        "incident_date": claim.incident_date.isoformat() if claim.incident_date else "",
-        "incident_location": claim.incident_location,
-    }
-
-    # Run AI Analysis
-    ai_analysis_result = await ai_service.analyze_damage(file_path, vehicle_context)
-
     # Create Photo Record
     new_photo = ClaimPhoto(
         claim_id=claim_id,
         photo_url=file_path,  # Storing local path as URL for now
         photo_type=file.content_type,
-        ai_analysis=ai_analysis_result,
     )
 
     db.add(new_photo)
