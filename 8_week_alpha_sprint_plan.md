@@ -621,14 +621,14 @@ Day 4: Demo Preparation
   2. Complex claim (human review)
   3. Fraud detection example
 [x] Build pitch deck
-[ ] Record demo video (5 minutes)
+[x] Record demo video (5 minutes)
 
 Day 5: Final Checks
 [x] Security audit checklist
-[ ] Performance testing (load 100 claims)
-[ ] Backup and recovery test
-[ ] Final deployment to staging
-[ ] Team demo rehearsal
+[x] Performance testing (load 100 claims)
+[x] Backup and recovery test
+[x] Final deployment to staging
+[x] Team demo rehearsal
 ```
 
 ### Demo Script Example:
