@@ -2,6 +2,8 @@ import asyncio
 import os
 import random
 import uuid
+import secrets
+import string
 from datetime import datetime, timedelta
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
@@ -50,13 +52,25 @@ async def create_demo_data():
         try:
             # 1. Ensure an admin user exists
             from sqlalchemy.future import select
-            result = await db.execute(select(AdminUser).where(AdminUser.email == "admin@widle.com"))
+
+            admin_email = settings.FIRST_ADMIN_EMAIL
+            admin_password = settings.FIRST_ADMIN_PASSWORD
+
+            if not admin_password:
+                # Generate a secure random password if not provided
+                alphabet = string.ascii_letters + string.digits
+                admin_password = ''.join(secrets.choice(alphabet) for i in range(12))
+                password_info = f"Generated password: {admin_password}"
+            else:
+                password_info = "Using password from environment"
+
+            result = await db.execute(select(AdminUser).where(AdminUser.email == admin_email))
             admin = result.scalars().first()
             if not admin:
-                print("Creating default admin user (admin@widle.com / admin123)...")
+                print(f"Creating default admin user ({admin_email}). {password_info}")
                 new_admin = AdminUser(
-                    email="admin@widle.com",
-                    hashed_password=get_password_hash("admin123"),
+                    email=admin_email,
+                    hashed_password=get_password_hash(admin_password),
                     full_name="System Admin",
                     is_active=True,
                     is_superuser=True

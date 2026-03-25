@@ -137,23 +137,19 @@ async def get_analytics(
     """
     Get analytics for admin dashboard.
     """
-    total_claims_result = await db.execute(select(func.count(Claim.id)))
-    total_claims = total_claims_result.scalar()
-
-    approved_claims_result = await db.execute(
-        select(func.count(Claim.id)).where(Claim.status == "Approved")
+    result = await db.execute(
+        select(
+            func.count(Claim.id).label("total"),
+            func.count(Claim.id).filter(Claim.status == "Approved").label("approved"),
+            func.count(Claim.id).filter(Claim.status == "New").label("pending"),
+            func.count(Claim.id).filter(Claim.status == "Rejected").label("rejected"),
+        )
     )
-    approved_claims = approved_claims_result.scalar()
-
-    pending_claims_result = await db.execute(
-        select(func.count(Claim.id)).where(Claim.status == "New")
-    )
-    pending_claims = pending_claims_result.scalar()
-
-    rejected_claims_result = await db.execute(
-        select(func.count(Claim.id)).where(Claim.status == "Rejected")
-    )
-    rejected_claims = rejected_claims_result.scalar()
+    counts = result.one()
+    total_claims = counts.total
+    approved_claims = counts.approved
+    pending_claims = counts.pending
+    rejected_claims = counts.rejected
 
     stp_rate = 0.0
     if total_claims and total_claims > 0:
