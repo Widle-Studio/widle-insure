@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Configure Stripe API Key
-stripe.api_key = settings.STRIPE_SECRET_KEY
+stripe.api_key = getattr(settings, "STRIPE_SECRET_KEY", None)
 
 @router.post("/{claim_id}/payout", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
 async def initiate_payout(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> Any:
@@ -37,7 +37,7 @@ async def initiate_payout(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db
     # The actual Stripe integration
     try:
         # For an alpha MVP, if the Stripe Secret Key isn't provided, use a mock transfer ID.
-        if settings.STRIPE_SECRET_KEY:
+        if getattr(settings, "STRIPE_SECRET_KEY", None):
             # We assume a dummy destination account since we don't capture this strictly in the FNOL form yet.
             # In a production app, the claimant would link their bank account via Stripe Connect.
             mock_destination = "acct_1032D82eZvKYlo2C"
