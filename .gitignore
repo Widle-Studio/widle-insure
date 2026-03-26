@@ -126,3 +126,9 @@ sql_app.db
 backend.log
 __pycache__
 backend/uploads/*
+
+# Next.js
+.next
+.swc
+out
+build
