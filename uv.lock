@@ -76,7 +76,7 @@ wheels = [
 
 [[package]]
 name = "asyncpg"
-version = "0.29.0"
+version = "0.31.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/c1/11/7a6000244eaeb6b8ed2238bf33477c486515d6133f2c295913aca3ba4a00/asyncpg-0.29.0.tar.gz", hash = "sha256:d1c49e1f44fffafd9a55e1a9b101590859d881d639ea2922516f5d9c512d354e", size = 820455, upload-time = "2023-11-05T05:59:10.879Z" }
 wheels = [
@@ -1179,7 +1179,7 @@ requires-dist = [
     { name = "aiofiles", specifier = "==25.1.0" },
     { name = "alembic", specifier = "==1.13.1" },
     { name = "anthropic", specifier = "==0.18.1" },
-    { name = "asyncpg", specifier = "==0.29.0" },
+    { name = "asyncpg", specifier = ">=0.30.0" },
     { name = "bcrypt", specifier = "==4.1.2" },
     { name = "fastapi", extras = ["all"], specifier = "==0.109.0" },
     { name = "httpx", specifier = "==0.26.0" },
