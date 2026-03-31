@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "chmod +x ./scripts/setup-database.sh && ./scripts/setup-database.sh",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",

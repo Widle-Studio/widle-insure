@@ -68,27 +68,6 @@ async def log_requests(request: Request, call_next):
 
     return response
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
-from app.core.database import get_db
-
-@app.get("/health")
-async def health_check(db: AsyncSession = Depends(get_db)):
-    # Check database connection
-    try:
-        from sqlalchemy import text
-        await db.execute(text("SELECT 1"))
-        db_status = "healthy"
-    except Exception as e:
-        logger.error(f"Database health check failed: {e}")
-        db_status = "unhealthy"
-
-    return {
-        "status": "healthy",
-        "service": "widle-insure-backend",
-        "database": db_status,
-        "version": "0.1.0"
-    }
 
 @app.get("/")
 async def root():
@@ -98,7 +77,9 @@ async def root():
 from app.api.v1.endpoints import claims, policies, payments
 from app.api.v1.endpoints.admin import auth as admin_auth
 from app.api.v1.endpoints.admin import claims as admin_claims
+from app.api.v1.endpoints.health import router as health_router
 
+app.include_router(health_router, tags=["health"])
 app.include_router(claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"])
 app.include_router(policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"])
 app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"])
