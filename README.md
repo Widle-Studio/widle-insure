@@ -114,6 +114,39 @@ npm run lint
 npm test
 ```
 
+## Vercel Deployment
+
+### Automatic Setup
+
+1. **Connect to Vercel**: Push to GitHub, import in Vercel
+2. **Add Vercel Postgres**: Dashboard → Storage → Create PostgreSQL
+3. **Set Environment Variables**:
+   ```
+   FIRST_ADMIN_EMAIL=admin@widle.com
+   FIRST_ADMIN_PASSWORD=your_secure_password
+   ANTHROPIC_API_KEY=sk-ant-...
+   SECRET_KEY=<generate with: openssl rand -hex 32>
+   BACKEND_CORS_ORIGINS=https://your-app.vercel.app
+   NEXT_PUBLIC_API_URL=https://your-app.vercel.app
+   ```
+4. **Deploy**: Migrations run automatically via postbuild script
+
+### First Deployment
+
+After first deployment:
+- ✅ Database tables created automatically
+- ✅ Admin user created with credentials from env vars
+- ✅ Health check shows database status
+
+### Manual Migration (if needed)
+
+```bash
+vercel env pull .env
+cd backend
+alembic upgrade head
+python scripts/create_admin.py
+```
+
 ## Troubleshooting
 - **"Port already in use":** Ensure no other instances of the backend/frontend are running using `lsof -i :8000` or `lsof -i :3000`. Kill existing processes if necessary.
 - **"Connection Refused" (Database):** Check if Docker containers are running (`docker ps`). Verify `DATABASE_URL` in your `.env`.
