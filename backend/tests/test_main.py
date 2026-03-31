@@ -24,7 +24,7 @@ async def test_health_check_async():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "widle-insure-backend"
+    assert data["service"] == "widle-insure-api"
     assert "database" in data
 
 def test_read_root():
@@ -39,5 +39,5 @@ def test_health_check():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "widle-insure-backend"
+    assert data["service"] == "widle-insure-api"
     assert "database" in data
