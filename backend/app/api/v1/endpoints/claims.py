@@ -1,7 +1,6 @@
 import asyncio
 import os
 import secrets
-import uuid
 from datetime import datetime
 from typing import Any
 
@@ -11,8 +10,8 @@ from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
-import uuid
 
+import uuid
 from app.core.database import get_db
 from app.core.security import get_api_key
 from app.models.claims import Claim, ClaimPhoto
@@ -176,14 +175,13 @@ async def upload_claim_photo(
 @router.post("/{claim_id}/analyze")
 async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Trigger AI analysis on claim photos"""
-    claim = await db.get(Claim, claim_id)
-    if not claim:
-        raise HTTPException(404, "Claim not found")
-
-    # We must explicitly query photos since db.get doesn't eagerly load relations
+    # Fetch claim with eager loading of photos to avoid redundant database calls
     stmt = select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
     result = await db.execute(stmt)
     claim_with_photos = result.scalars().first()
+
+    if not claim_with_photos:
+        raise HTTPException(404, "Claim not found")
 
     if not claim_with_photos.photos:
         raise HTTPException(400, "No photos to analyze")
