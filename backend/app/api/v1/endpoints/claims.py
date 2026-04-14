@@ -172,7 +172,9 @@ async def upload_claim_photo(
 
     return new_photo
 
-@router.post("/{claim_id}/analyze")
+@router.post(
+    "/{claim_id}/analyze", dependencies=[Depends(get_api_key)]
+)
 async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Trigger AI analysis on claim photos"""
     # Fetch claim with eager loading of photos to avoid redundant database calls
