@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import logging
@@ -87,12 +88,10 @@ class ClaudeAIService:
         # Build content block for the message
         content = []
 
-        # Process each image
-        for url in photo_urls:
-            # Assume it's a local file for now based on current app implementation
-            image_block = await self._encode_image(url)
-            if image_block:
-                content.append(image_block)
+        # Process each image in parallel for better performance
+        if photo_urls:
+            image_blocks = await asyncio.gather(*[self._encode_image(url) for url in photo_urls])
+            content.extend([block for block in image_blocks if block])
 
         # Add the text prompt
         text_prompt = self._build_damage_assessment_prompt(vehicle_info, incident_info)
