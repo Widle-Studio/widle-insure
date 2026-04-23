@@ -6,6 +6,7 @@ import { apiClient } from "@/lib/api-client";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { ClaimPhotoGrid } from "@/components/features/claims/ClaimPhotoGrid";
 
 export default function ClaimResultsPage({ params }: { params: { id: string } }) {
     const [claim, setClaim] = useState<any>(null);
@@ -95,18 +96,7 @@ export default function ClaimResultsPage({ params }: { params: { id: string } })
                 </Card>
             </div>
 
-            {claim.photos?.length > 0 && (
-                <div className="space-y-4">
-                    <h3 className="text-xl font-semibold">Analyzed Photos</h3>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {claim.photos.map((photo: any) => (
-                            <div key={photo.id} className="relative aspect-video rounded-lg overflow-hidden border shadow-sm">
-                                <img src={`http://localhost:8000${photo.photo_url}`} alt="Damage" className="object-cover w-full h-full" />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
+            <ClaimPhotoGrid photos={claim.photos} />
 
             <div className="flex justify-end pt-6 border-t">
                 <Link href="/dashboard">
