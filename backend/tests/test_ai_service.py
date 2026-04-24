@@ -1,5 +1,24 @@
 import pytest
-from app.services.ai_service import ClaudeAIService
+from app.services.ai_service import ClaudeAIService, sanitize_input
+
+def test_sanitize_input():
+    # Test normal text
+    assert sanitize_input("Hello World") == "Hello World"
+
+    # Test HTML tags removal
+    assert sanitize_input("Hello <script>alert(1)</script> World") == "Hello alert(1) World"
+    assert sanitize_input("Check <b>this</b> out") == "Check this out"
+
+    # Test empty string
+    assert sanitize_input("") == ""
+
+    # Test non-string input (should be converted to string)
+    assert sanitize_input(123) == "123"
+    assert sanitize_input(None) == "None"
+
+    # Test nested/complex tags
+    assert sanitize_input("<<tag>>") == ">"
+    assert sanitize_input("<a href='test'>Link</a>") == "Link"
 
 @pytest.mark.asyncio
 async def test_assess_damage():
