@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: "standalone",
     // If not routing to custom domains via Vercel directly but instead proxying locally:
     // rewrites: async () => {
     //     return [
