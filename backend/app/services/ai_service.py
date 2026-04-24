@@ -88,9 +88,11 @@ class ClaudeAIService:
         # Build content block for the message
         content = []
 
-        # Process each image in parallel for better performance
+        # Process each image concurrently
         if photo_urls:
-            image_blocks = await asyncio.gather(*[self._encode_image(url) for url in photo_urls])
+            # Assume they are local files for now based on current app implementation
+            image_tasks = [self._encode_image(url) for url in photo_urls]
+            image_blocks = await asyncio.gather(*image_tasks)
             content.extend([block for block in image_blocks if block])
 
         # Add the text prompt
