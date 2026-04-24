@@ -6,7 +6,7 @@ from pydantic import BaseModel, EmailStr
 
 
 class AdminUserBase(BaseModel):
-    email: str
+    email: EmailStr
     full_name: Optional[str] = None
     is_active: Optional[bool] = True
     is_superuser: bool = False
@@ -30,4 +30,4 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    email: Optional[str] = None
+    email: Optional[EmailStr] = None
