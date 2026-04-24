@@ -1,0 +1,8 @@
+names:
+  0: minor_damage
+  1: moderate_damage
+  2: major_damage
+  3: front_bumper
+path: /app/backend/scripts/dataset
+train: images/train
+val: images/val
