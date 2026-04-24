@@ -9,6 +9,7 @@ import aiofiles
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
 from app.core.config import settings
+from app.services.vision_service import yolo_vision_service
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +77,15 @@ class ClaudeAIService:
         encode_tasks = [self._encode_image(url) for url in photo_urls]
         image_blocks = await asyncio.gather(*encode_tasks)
 
+        # Run local YOLO inference
+        vision_result = yolo_vision_service.detect_damage(photo_urls)
+
         content = []
         for image_block in image_blocks:
             if image_block:
                 content.append(image_block)
 
-        text_prompt = self._build_damage_assessment_prompt(vehicle_info, incident_info)
+        text_prompt = self._build_damage_assessment_prompt(vehicle_info, incident_info, vision_result)
         content.append({
             "type": "text",
             "text": text_prompt
@@ -130,7 +134,18 @@ Do not include any other text before or after the JSON."""
                 "reasoning": f"Error occurred during analysis: {str(e)}"
             }
 
-    def _build_damage_assessment_prompt(self, vehicle_info, incident_info):
+    def _build_damage_assessment_prompt(self, vehicle_info, incident_info, vision_result):
+        vision_context = ""
+        if vision_result.get("status") == "success" and vision_result.get("detections"):
+            vision_context = f"""
+<computer_vision_analysis>
+The initial automated computer vision system (YOLOv8) detected the following:
+- Highest Severity Detected: {sanitize_input(vision_result.get('highest_severity', 'unknown'))}
+- Damaged Parts Detected: {', '.join([sanitize_input(p) for p in vision_result.get('damaged_parts', [])])}
+</computer_vision_analysis>
+Use this computer vision data to inform your cost estimation and final adjudication, but ultimately rely on your own visual assessment of the photos provided.
+"""
+
         return f"""Here is the context for the claim:
 <vehicle_context>
 <make>{sanitize_input(vehicle_info.get('make', ''))}</make>
@@ -141,7 +156,7 @@ Do not include any other text before or after the JSON."""
 <date>{sanitize_input(incident_info.get('date', ''))}</date>
 <description>{sanitize_input(incident_info.get('description', ''))}</description>
 </incident_context>
-
+{vision_context}
 Be conservative in your estimates. If unsure, flag for human review.
 """
 
