@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import logging
@@ -5,8 +6,8 @@ import os
 import re
 
 import aiofiles
-from anthropic import AsyncAnthropic
-
+from langchain_anthropic import ChatAnthropic
+from langchain_core.messages import HumanMessage, SystemMessage
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -19,14 +20,16 @@ def sanitize_input(text: str) -> str:
 
 class ClaudeAIService:
     def __init__(self):
-        # We need to handle async call, so AsyncAnthropic
-        self.client = AsyncAnthropic(api_key=getattr(settings, 'ANTHROPIC_API_KEY', '')) if getattr(settings, 'ANTHROPIC_API_KEY', None) else None
+        api_key = getattr(settings, 'ANTHROPIC_API_KEY', None)
+        self.client = ChatAnthropic(
+            model_name="claude-3-5-sonnet-20241022",
+            anthropic_api_key=api_key,
+            max_tokens=1024
+        ) if api_key else None
 
     async def _encode_image(self, photo_path: str) -> dict | None:
         """Read a local image file and encode it as base64 for Anthropic API."""
         try:
-            # photo_urls are typically local paths (e.g., /static/uploads/...) based on current implementation
-            # We strip the leading slash if present to make it a relative path to the current working directory
             local_path = photo_path.lstrip("/")
 
             if not os.path.exists(local_path):
@@ -43,12 +46,10 @@ class ClaudeAIService:
                 media_type = "image/jpeg"
 
             return {
-                "type": "image",
-                "source": {
-                    "type": "base64",
-                    "media_type": media_type,
-                    "data": base64_image,
-                },
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{media_type};base64,{base64_image}"
+                }
             }
         except Exception as e:
             logger.error(f"Error encoding image {photo_path}: {e}")
@@ -60,19 +61,6 @@ class ClaudeAIService:
         vehicle_info: dict,
         incident_info: dict
     ) -> dict:
-        """
-        Analyze damage photos using Claude Vision API
-
-        Returns:
-            {
-                "severity": "minor" | "moderate" | "major" | "total_loss",
-                "damaged_parts": ["front_bumper", "hood", ...],
-                "estimated_cost": 2500.00,
-                "confidence": 0.92,
-                "fraud_indicators": [],
-                "reasoning": "Analysis text..."
-            }
-        """
         if not self.client:
             logger.warning("Anthropic API key not configured. Returning mock data.")
             return {
@@ -84,17 +72,15 @@ class ClaudeAIService:
                 "reasoning": "Mock analysis - implement Claude API"
             }
 
-        # Build content block for the message
-        content = []
+        # Concurrently encode images
+        encode_tasks = [self._encode_image(url) for url in photo_urls]
+        image_blocks = await asyncio.gather(*encode_tasks)
 
-        # Process each image
-        for url in photo_urls:
-            # Assume it's a local file for now based on current app implementation
-            image_block = await self._encode_image(url)
+        content = []
+        for image_block in image_blocks:
             if image_block:
                 content.append(image_block)
 
-        # Add the text prompt
         text_prompt = self._build_damage_assessment_prompt(vehicle_info, incident_info)
         content.append({
             "type": "text",
@@ -115,21 +101,16 @@ You must return the result EXACTLY as a valid JSON object matching this schema:
 Do not include any other text before or after the JSON."""
 
         try:
-            response = await self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",
-                max_tokens=1024,
-                system=system_prompt,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": content,
-                    }
-                ]
-            )
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=content)
+            ]
+            response = await self.client.ainvoke(messages)
 
-            # Parse the JSON response
-            response_text = response.content[0].text
-            # Attempt to extract JSON if Claude added conversational wrapper
+            response_text = response.content
+            if isinstance(response_text, list):
+                response_text = response_text[0].get("text", "")
+
             if "```json" in response_text:
                 json_str = response_text.split("```json")[1].split("```")[0].strip()
             else:
@@ -140,7 +121,6 @@ Do not include any other text before or after the JSON."""
 
         except Exception as e:
             logger.error(f"Error calling Claude API: {e}")
-            # Fallback mock data in case of error
             return {
                 "severity": "moderate",
                 "damaged_parts": ["front_bumper", "hood"],
@@ -165,5 +145,4 @@ Do not include any other text before or after the JSON."""
 Be conservative in your estimates. If unsure, flag for human review.
 """
 
-# Initialize service
 ai_service = ClaudeAIService()
