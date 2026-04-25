@@ -1,7 +1,7 @@
 import uuid
 import pytest
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -13,7 +13,7 @@ async def test_analyze_claim_not_found():
     claim_id = uuid.uuid4()
 
     # Mock db.execute to return None for first()
-    mock_db = MagicMock()
+    mock_db = AsyncMock()
     mock_result = MagicMock()
     mock_result.scalars.return_value.first.return_value = None
     mock_db.execute.return_value = mock_result
@@ -44,7 +44,7 @@ async def test_analyze_claim_no_photos(mock_claim_class):
     mock_claim.photos = []
 
     # Mock db.execute to return the claim with no photos
-    mock_db = MagicMock()
+    mock_db = AsyncMock()
     mock_result = MagicMock()
     mock_result.scalars.return_value.first.return_value = mock_claim
     mock_db.execute.return_value = mock_result

@@ -60,6 +60,7 @@ class ClaimPhoto(Base):
 
     claim = relationship("Claim", back_populates="photos")
 
+
 class ClaimAuditLog(Base):
     __tablename__ = "claim_audit_log"
 

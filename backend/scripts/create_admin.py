@@ -9,7 +9,7 @@ from sqlalchemy import select
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.database import AsyncSessionLocal
-from app.models.users import User
+from app.models.users import AdminUser
 from app.core.security import get_password_hash
 
 async def create_admin():
@@ -19,7 +19,7 @@ async def create_admin():
 
     async with AsyncSessionLocal() as db:
         # Check if admin exists
-        result = await db.execute(select(User).filter(User.email == email))
+        result = await db.execute(select(AdminUser).filter(AdminUser.email == email))
         existing = result.scalar_one_or_none()
 
         if existing:
@@ -27,10 +27,10 @@ async def create_admin():
             return
 
         # Create admin user
-        admin = User(
+        admin = AdminUser(
             email=email,
             hashed_password=get_password_hash(password),
-            is_admin=True
+            is_superuser=True
         )
         db.add(admin)
         await db.commit()
