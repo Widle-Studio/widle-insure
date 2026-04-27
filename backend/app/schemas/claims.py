@@ -37,8 +37,10 @@ class ClaimBase(BaseModel):
             raise ValueError("Incident date cannot be in the future")
         return v
 
+
 class ClaimCreate(ClaimBase):
     pass
+
 
 class ClaimPhotoResponse(BaseModel):
     id: UUID
@@ -47,6 +49,7 @@ class ClaimPhotoResponse(BaseModel):
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class ClaimResponse(ClaimBase):
     id: UUID
