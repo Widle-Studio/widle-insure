@@ -90,8 +90,7 @@ class ClaudeAIService:
         )
         content.append({"type": "text", "text": text_prompt})
 
-        system_prompt = """You are an auto insurance claims adjuster. \
-Analyze the vehicle damage photo provided.
+        system_prompt = """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
 Provide your analysis based on the photo and the provided context.
 You must return the result EXACTLY as a valid JSON object matching this schema:
 {
@@ -142,13 +141,10 @@ Do not include any other text before or after the JSON."""
             vision_context = f"""
 <computer_vision_analysis>
 The initial automated computer vision system (YOLOv8) detected the following:
-- Highest Severity Detected: \
-  {sanitize_input(vision_result.get("highest_severity", "unknown"))}
-- Damaged Parts Detected: \
-  {", ".join([sanitize_input(p) for p in vision_result.get("damaged_parts", [])])}
+- Highest Severity Detected: {sanitize_input(vision_result.get("highest_severity", "unknown"))}
+- Damaged Parts Detected: {", ".join([sanitize_input(p) for p in vision_result.get("damaged_parts", [])])}
 </computer_vision_analysis>
-Use this computer vision data to inform your cost estimation and final adjudication, \
-but ultimately rely on your own visual assessment of the photos provided.
+Use this computer vision data to inform your cost estimation and final adjudication, but ultimately rely on your own visual assessment of the photos provided.
 """
 
         return f"""Here is the context for the claim:
