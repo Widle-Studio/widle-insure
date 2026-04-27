@@ -1,8 +1,9 @@
 import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 import stripe
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import patch, MagicMock, AsyncMock
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -218,9 +219,6 @@ async def test_initiate_payout_stripe_error(mock_claim_class):
          patch("stripe.Transfer.create") as mock_transfer_create:
 
         mock_getattr.side_effect = lambda obj, attr, default=None: "test_stripe_key" if attr == "STRIPE_SECRET_KEY" else getattr(obj, attr, default)
-
-        # Simulate Stripe Error
-        stripe_error = stripe.error.StripeError("Test Error")
 
         # Override the property
         class MockStripeError(stripe.error.StripeError):
