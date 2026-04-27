@@ -18,7 +18,7 @@ async def seed_data(count: int, with_photos: bool):
             return
 
         print(f"Seeding {count} test claims...")
-        
+
         claims = []
         for i in range(1, count + 1):
             claim_id = uuid.uuid4()
@@ -36,7 +36,7 @@ async def seed_data(count: int, with_photos: bool):
                 vehicle_make="Toyota",
                 vehicle_model="Camry",
                 vehicle_year=2020,
-                status="pending"
+                status="pending",
             )
             claims.append(claim)
 
@@ -45,7 +45,7 @@ async def seed_data(count: int, with_photos: bool):
                     id=uuid.uuid4(),
                     claim_id=claim_id,
                     photo_url=f"http://example.com/mock-photo-{i}.jpg",
-                    photo_type="image/jpeg"
+                    photo_type="image/jpeg",
                 )
                 session.add(photo)
 
@@ -53,10 +53,15 @@ async def seed_data(count: int, with_photos: bool):
         await session.commit()
         print(f"Successfully created {len(claims)} test claims.")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Seed database with mock data.")
-    parser.add_argument("--count", type=int, default=10, help="Number of claims to create")
-    parser.add_argument("--with-photos", action="store_true", help="Include mock photos with claims")
+    parser.add_argument(
+        "--count", type=int, default=10, help="Number of claims to create"
+    )
+    parser.add_argument(
+        "--with-photos", action="store_true", help="Include mock photos with claims"
+    )
     args = parser.parse_args()
 
     asyncio.run(seed_data(count=args.count, with_photos=args.with_photos))

@@ -6,16 +6,22 @@ from datetime import datetime
 from typing import Any
 
 import magic
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from sqlalchemy.exc import IntegrityError  # pylint: disable=import-error
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
+from app.core.rate_limit import limiter
 from app.core.security import get_api_key
 from app.models.claims import Claim, ClaimPhoto
-from app.schemas.claims import ClaimCreate, ClaimPhotoResponse, ClaimResponse
+from app.schemas.claims import (
+    ClaimCreate,
+    ClaimPhotoResponse,
+    ClaimPublicStatusResponse,
+    ClaimResponse,
+)
 from app.services.storage import storage_service
 from app.tasks import analyze_claim_task
 
@@ -79,29 +85,24 @@ async def get_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     Get a claim by ID.
     """
     # Fetch claim with eager loading of photos to avoid async compatibility issues
-    stmt = (
-        select(Claim)
-        .where(Claim.id == claim_id)
-        .options(selectinload(Claim.photos))
-    )
+    stmt = select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
     result = await db.execute(stmt)
     claim = result.scalars().first()
     if not claim:
         raise HTTPException(status_code=404, detail="Claim not found")
     return claim
 
-@router.get(
-    "/lookup/{claim_number}", response_model=ClaimResponse
-)
-async def lookup_claim(claim_number: str, db: AsyncSession = Depends(get_db)) -> Any:
+
+@router.get("/lookup/{claim_number}", response_model=ClaimPublicStatusResponse)
+@limiter.limit("10/minute")
+async def lookup_claim(
+    request: Request, claim_number: str, db: AsyncSession = Depends(get_db)
+) -> Any:
     """
     Lookup a claim by claim_number without API key (public).
+    Returns a restricted schema to avoid leaking PII.
     """
-    stmt = (
-        select(Claim)
-        .where(Claim.claim_number == claim_number)
-        .options(selectinload(Claim.photos))
-    )
+    stmt = select(Claim).where(Claim.claim_number == claim_number)
     result = await db.execute(stmt)
     claim = result.scalars().first()
     if not claim:
@@ -170,9 +171,8 @@ async def upload_claim_photo(
 
     return new_photo
 
-@router.post(
-    "/{claim_id}/analyze", dependencies=[Depends(get_api_key)]
-)
+
+@router.post("/{claim_id}/analyze", dependencies=[Depends(get_api_key)])
 async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Trigger AI analysis on claim photos"""
     # Fetch claim with eager loading of photos to avoid redundant database calls
@@ -185,9 +185,6 @@ async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db))
 
     if not claim_with_photos.photos:
         raise HTTPException(400, "No photos to analyze")
-
-    # Get photo URLs
-    [photo.photo_url for photo in claim_with_photos.photos]
 
     # Update status to processing
     claim_with_photos.status = "Processing"

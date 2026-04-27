@@ -8,7 +8,10 @@ def test_sanitize_input():
     assert sanitize_input("Hello World") == "Hello World"
 
     # Test HTML tags removal
-    assert sanitize_input("Hello <script>alert(1)</script> World") == "Hello alert(1) World"
+    assert (
+        sanitize_input("Hello <script>alert(1)</script> World")
+        == "Hello alert(1) World"
+    )
     assert sanitize_input("Check <b>this</b> out") == "Check this out"
 
     # Test empty string
@@ -22,6 +25,7 @@ def test_sanitize_input():
     assert sanitize_input("<<tag>>") == ">"
     assert sanitize_input("<a href='test'>Link</a>") == "Link"
 
+
 @pytest.mark.asyncio
 async def test_assess_damage():
     ai_service = ClaudeAIService()
@@ -29,7 +33,7 @@ async def test_assess_damage():
     analysis = await ai_service.assess_damage(
         photo_urls=["http://example.com/photo.jpg"],
         vehicle_info={"make": "Toyota", "model": "Camry", "year": 2020},
-        incident_info={"description": "Rear-end collision", "date": "2024-03-01"}
+        incident_info={"description": "Rear-end collision", "date": "2024-03-01"},
     )
 
     assert analysis["severity"] == "moderate"

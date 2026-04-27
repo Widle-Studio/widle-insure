@@ -2,6 +2,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class AdjudicationService:
     """
     Service responsible for determining if a claim can be automatically approved,
@@ -12,10 +13,12 @@ class AdjudicationService:
     # Deterministic Hard Limits
     MAX_AUTO_APPROVE_AMOUNT = 2000.00
     REQUIRED_AI_CONFIDENCE = 0.90
-    MAX_FRAUD_SCORE = 10 # Assuming a scale of 0-100 where 0 is no risk
+    MAX_FRAUD_SCORE = 10  # Assuming a scale of 0-100 where 0 is no risk
 
     @classmethod
-    def evaluate_claim(cls, claim: dict, policy: dict, ai_analysis: dict, fraud_score: int) -> dict:
+    def evaluate_claim(
+        cls, claim: dict, policy: dict, ai_analysis: dict, fraud_score: int
+    ) -> dict:
         """
         Evaluate a claim for auto-approval.
 
@@ -89,6 +92,10 @@ class AdjudicationService:
             return {"status": "Manual Review", "reason": " | ".join(reasons)}
 
         # If all deterministic guardrails pass, approve.
-        return {"status": "Approved", "reason": "Passed all auto-adjudication guardrails."}
+        return {
+            "status": "Approved",
+            "reason": "Passed all auto-adjudication guardrails.",
+        }
+
 
 adjudication_service = AdjudicationService()
