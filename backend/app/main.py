@@ -32,7 +32,7 @@ if settings.SENTRY_DSN:
 logger = logging.getLogger(__name__)
 
 # Configure Rate Limiter
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+from app.core.rate_limit import limiter
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
