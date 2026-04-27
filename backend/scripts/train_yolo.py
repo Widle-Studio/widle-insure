@@ -1,5 +1,7 @@
 import os
+
 from ultralytics import YOLO
+
 
 def train_model():
     """

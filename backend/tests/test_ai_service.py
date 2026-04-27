@@ -1,5 +1,7 @@
 import pytest
+
 from app.services.ai_service import ClaudeAIService, sanitize_input
+
 
 def test_sanitize_input():
     # Test normal text

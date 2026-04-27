@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 
@@ -24,7 +24,7 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         result = await db.execute(text("SELECT version_num FROM alembic_version"))
         version = result.scalar_one_or_none()
         migration_status = version if version else "no migrations"
-    except:
+    except Exception:
         migration_status = "not initialized"
 
     return {
