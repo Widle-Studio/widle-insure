@@ -1,7 +1,9 @@
 import os
-import yaml
+
 import numpy as np
+import yaml
 from PIL import Image
+
 
 def generate_mock_dataset():
     base_dir = os.path.dirname(os.path.abspath(__file__))

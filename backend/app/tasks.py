@@ -1,17 +1,49 @@
 import asyncio
 import logging
-from typing import Dict, Any
+from typing import Any, Dict
+
+from sqlalchemy.future import select
+from sqlalchemy.orm import selectinload
 
 from app.core.celery_app import celery_app
 from app.core.database import AsyncSessionLocal
 from app.models.claims import Claim
-from app.services.ai_service import ai_service
 from app.services.adjudication_service import adjudication_service
+from app.services.ai_service import ai_service
 from app.services.email import email_service
-from sqlalchemy.future import select
-from sqlalchemy.orm import selectinload
 
 logger = logging.getLogger(__name__)
+
+
+
+def _get_mock_policy_and_fraud_score(estimated_damage_cost: Any) -> tuple[Dict[str, Any], int]:
+    mock_policy = {
+        "status": "Active",
+        "coverage_limit": 50000.0,
+        "deductible": 500.0
+    }
+
+    mock_fraud_score = 0
+    if estimated_damage_cost and float(estimated_damage_cost) > 10000:
+        mock_fraud_score += 15
+
+    return mock_policy, mock_fraud_score
+
+async def _send_adjudication_email(claim: Claim, new_status: str):
+    if new_status == "Approved":
+        email_body = f"Your claim {claim.claim_number} has been automatically approved for ${claim.approved_amount}!"
+        await email_service.send_email(
+            to=claim.claimant_email,
+            subject="Claim Approved",
+            body=email_body
+        )
+    elif new_status == "Manual Review":
+        email_body = f"Your claim {claim.claim_number} is currently under manual review."
+        await email_service.send_email(
+            to=claim.claimant_email,
+            subject="Claim Under Review",
+            body=email_body
+        )
 
 async def process_claim_analysis_async(claim_id: str):
     async with AsyncSessionLocal() as db:
@@ -45,16 +77,7 @@ async def process_claim_analysis_async(claim_id: str):
         for photo in claim_with_photos.photos:
             photo.ai_analysis = analysis
 
-        # Mock Policy and Fraud Score
-        mock_policy = {
-            "status": "Active",
-            "coverage_limit": 50000.0,
-            "deductible": 500.0
-        }
-
-        mock_fraud_score = 0
-        if claim_with_photos.estimated_damage_cost and float(claim_with_photos.estimated_damage_cost) > 10000:
-            mock_fraud_score += 15
+        mock_policy, mock_fraud_score = _get_mock_policy_and_fraud_score(claim_with_photos.estimated_damage_cost)
 
         # Trigger Auto-Adjudication
         claim_dict = {"estimated_damage_cost": claim_with_photos.estimated_damage_cost}
@@ -67,22 +90,10 @@ async def process_claim_analysis_async(claim_id: str):
 
         new_status = adjudication_result["status"]
         claim_with_photos.status = new_status
-
         if new_status == "Approved":
             claim_with_photos.approved_amount = claim_with_photos.estimated_damage_cost
-            email_body = f"Your claim {claim_with_photos.claim_number} has been automatically approved for ${claim_with_photos.approved_amount}!"
-            await email_service.send_email(
-                to=claim_with_photos.claimant_email,
-                subject="Claim Approved",
-                body=email_body
-            )
-        elif new_status == "Manual Review":
-            email_body = f"Your claim {claim_with_photos.claim_number} is currently under manual review."
-            await email_service.send_email(
-                to=claim_with_photos.claimant_email,
-                subject="Claim Under Review",
-                body=email_body
-            )
+
+        await _send_adjudication_email(claim_with_photos, new_status)
 
         await db.commit()
 
