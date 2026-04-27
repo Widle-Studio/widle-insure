@@ -10,6 +10,10 @@ from app.models.claims import Claim
 from app.services.adjudication_service import adjudication_service
 from app.services.ai_service import ai_service
 from app.services.email import email_service
+from sqlalchemy.future import select
+from sqlalchemy import update
+from sqlalchemy.orm import selectinload
+from app.models.claims import ClaimPhoto
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +52,10 @@ async def process_claim_analysis_async(claim_id: str):
 
         claim_with_photos.estimated_damage_cost = analysis.get("estimated_cost")
 
-        # Store AI analysis in photos
-        for photo in claim_with_photos.photos:
-            photo.ai_analysis = analysis
+        # Store AI analysis in photos efficiently
+        # synchronize_session="auto" is used by default, which keeps in-memory objects updated
+        stmt_update = update(ClaimPhoto).where(ClaimPhoto.claim_id == claim_id).values(ai_analysis=analysis)
+        await db.execute(stmt_update)
 
         # Mock Policy and Fraud Score
         mock_policy = {
