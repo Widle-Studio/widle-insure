@@ -56,6 +56,11 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "Accept", "x-api-key"],
 )
 
+<<<<<<< test/login-error-paths-2060354833373583007
+
+
+=======
+>>>>>>> main
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -76,7 +81,10 @@ async def root():
     """Root endpoint providing a welcome message."""
     return {"message": "Welcome to Widle Insure API"}
 
+<<<<<<< test/login-error-paths-2060354833373583007
+=======
 
+>>>>>>> main
 app.include_router(health_router, tags=["health"])
 app.include_router(
     claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"]

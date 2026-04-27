@@ -13,11 +13,11 @@ def _setup_cors_env():
     # The actual issue is that config was already loaded from .env when we run pytest.
     pass
 
-from fastapi.testclient import TestClient  # noqa: E402
-
 
 def test_cors_preflight():
     from importlib import reload
+
+    from fastapi.testclient import TestClient
 
     import app.core.config
     os.environ["BACKEND_CORS_ORIGINS"] = '["http://localhost:3000"]'
@@ -38,6 +38,8 @@ def test_cors_preflight():
 
 def test_cors_rejected_origin():
     from importlib import reload
+
+    from fastapi.testclient import TestClient
 
     import app.core.config
     os.environ["BACKEND_CORS_ORIGINS"] = '["http://localhost:3000"]'

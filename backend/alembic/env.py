@@ -24,8 +24,11 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Overwrite sqlalchemy.url with the one from settings
+<<<<<<< test/login-error-paths-2060354833373583007
+=======
 import os  # noqa: E402
 
+>>>>>>> main
 database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./sql_app.db")
 config.set_main_option("sqlalchemy.url", database_url)
 
