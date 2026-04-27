@@ -1,5 +1,7 @@
-import pytest
 from datetime import datetime, timezone
+
+import pytest
+
 
 class SharedMockScalars:
     def __init__(self, result):

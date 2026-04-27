@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import uuid
 from datetime import datetime
@@ -5,11 +6,8 @@ from datetime import datetime
 from sqlalchemy import select
 
 from app.core.database import AsyncSessionLocal
-from app.models.claims import Claim
+from app.models.claims import Claim, ClaimPhoto
 
-
-import argparse
-from app.models.claims import ClaimPhoto
 
 async def seed_data(count: int, with_photos: bool):
     async with AsyncSessionLocal() as session:

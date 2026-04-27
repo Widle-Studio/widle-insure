@@ -1,21 +1,20 @@
 import asyncio
 import os
 import random
-import uuid
 import secrets
 import string
+import sys
 from datetime import datetime, timedelta
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.core.config import settings
+from app.core.security import get_password_hash
 from app.models.claims import Claim, ClaimPhoto
 from app.models.users import AdminUser
-from app.core.security import get_password_hash
 
 # Generate some realistic-looking dummy data
 first_names = ["James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda", "David", "Elizabeth", "William", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen"]

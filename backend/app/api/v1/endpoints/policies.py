@@ -1,12 +1,12 @@
 
 import json
 import logging
+
+import redis.asyncio as redis
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-import redis.asyncio as redis
 
 from app.core.config import settings
-
 from app.core.security import get_api_key
 
 router = APIRouter()
