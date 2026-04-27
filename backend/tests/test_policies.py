@@ -7,6 +7,7 @@ from app.main import app
 client = TestClient(app)
 headers = {"x-api-key": settings.API_KEY}
 
+
 @pytest.mark.parametrize(
     "policy_number, req_headers, expected_status, expected_response",
     [
@@ -61,6 +62,8 @@ headers = {"x-api-key": settings.API_KEY}
     ],
 )
 def test_get_policy(policy_number, req_headers, expected_status, expected_response):
-    response = client.get(f"{settings.API_V1_STR}/policies/{policy_number}", headers=req_headers)
+    response = client.get(
+        f"{settings.API_V1_STR}/policies/{policy_number}", headers=req_headers
+    )
     assert response.status_code == expected_status
     assert response.json() == expected_response

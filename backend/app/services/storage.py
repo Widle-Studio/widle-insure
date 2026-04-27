@@ -10,6 +10,7 @@ from app.core.config import settings
 
 UPLOAD_DIR = "uploads"
 
+
 class StorageService:
     def __init__(self):
         if not os.path.exists(UPLOAD_DIR):
@@ -23,7 +24,7 @@ class StorageService:
         if file.size and file.size > settings.MAX_UPLOAD_SIZE:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=f"File exceeds limit: {settings.MAX_UPLOAD_SIZE} bytes."
+                detail=f"File exceeds limit: {settings.MAX_UPLOAD_SIZE} bytes.",
             )
 
         file_extension = os.path.splitext(file.filename)[1]
@@ -62,7 +63,7 @@ class StorageService:
                 if accumulated_size > settings.MAX_UPLOAD_SIZE:
                     raise HTTPException(
                         status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                        detail=f"File exceeds limit: {settings.MAX_UPLOAD_SIZE} bytes."
+                        detail=f"File exceeds limit: {settings.MAX_UPLOAD_SIZE} bytes.",
                     )
                 await buffer.write(content)
 
@@ -72,5 +73,6 @@ class StorageService:
         """
         if os.path.exists(file_path):
             os.remove(file_path)
+
 
 storage_service = StorageService()

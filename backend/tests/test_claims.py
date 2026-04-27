@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from unittest.mock import patch
 
 import pytest
@@ -52,6 +51,7 @@ async def test_create_claim_invalid_email(valid_claim_payload: dict):
     assert response.status_code == 422
     data = response.json()
     assert data["detail"][0]["loc"] == ["body", "claimant_email"]
+
 
 @pytest.mark.asyncio
 async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
@@ -108,7 +108,9 @@ async def test_create_claim_success(valid_claim_payload: dict, mock_db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_claim_secure_randomness(valid_claim_payload: dict, mock_db_session):
+async def test_create_claim_secure_randomness(
+    valid_claim_payload: dict, mock_db_session
+):
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
@@ -126,7 +128,9 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict, mock_db
         with patch(
             "app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456
         ) as mock_randbelow:
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 response = await client.post(
                     f"{settings.API_V1_STR}/claims/",
                     json=valid_claim_payload,
@@ -166,7 +170,9 @@ async def test_upload_claim_photo_invalid_content_type():
 
 
 @pytest.mark.asyncio
-async def test_get_claim_success(valid_claim_payload: dict, mock_db_session, mock_claim_class):
+async def test_get_claim_success(
+    valid_claim_payload: dict, mock_db_session, mock_claim_class
+):
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}

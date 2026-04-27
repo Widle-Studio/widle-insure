@@ -1,11 +1,13 @@
 import uuid
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 from httpx import ASGITransport, AsyncClient
-from unittest.mock import patch, MagicMock, AsyncMock
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.main import app
+
 
 @pytest.mark.asyncio
 async def test_analyze_claim_not_found():
@@ -34,6 +36,7 @@ async def test_analyze_claim_not_found():
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Claim not found"
+
 
 @pytest.mark.asyncio
 async def test_analyze_claim_no_photos(mock_claim_class):
