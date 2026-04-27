@@ -1,3 +1,4 @@
+from fastapi.testclient import TestClient
 import os
 
 import pytest
@@ -13,7 +14,6 @@ def _setup_cors_env():
     # The actual issue is that config was already loaded from .env when we run pytest.
     pass
 
-from fastapi.testclient import TestClient
 
 
 def test_cors_preflight():
