@@ -72,14 +72,10 @@ async def initiate_payout(
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error during payout for claim {claim_id}: {str(e)}")
-        raise HTTPException(
-            status_code=502, detail=f"Payment gateway error: {e.user_message}"
-        )
+        raise HTTPException(status_code=502, detail=f"Payment gateway error: {e.user_message}") from e
     except Exception as e:
         logger.error(f"Unexpected error during payout: {str(e)}")
-        raise HTTPException(
-            status_code=500, detail="Internal server error during payout"
-        )
+        raise HTTPException(status_code=500, detail="Internal server error during payout") from e
 
     claim.status = "Paid"
     # Note: A real implementation would store transfer_id in a new column on the Claim model

@@ -77,7 +77,11 @@ class ClaudeAIService:
         encode_tasks = [self._encode_image(url) for url in photo_urls]
         image_blocks, vision_result = await asyncio.gather(
             asyncio.gather(*encode_tasks),
+<<<<<<< jules-925386469085068614-b86e0eed
+            asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls),
+=======
             asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls)
+>>>>>>> main
         )
 
         try:
