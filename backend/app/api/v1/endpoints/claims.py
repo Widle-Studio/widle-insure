@@ -186,9 +186,6 @@ async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db))
     if not claim_with_photos.photos:
         raise HTTPException(400, "No photos to analyze")
 
-    # Get photo URLs
-    photo_urls = [photo.photo_url for photo in claim_with_photos.photos]
-
     # Update status to processing
     claim_with_photos.status = "Processing"
     await db.commit()
