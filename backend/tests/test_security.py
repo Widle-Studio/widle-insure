@@ -10,7 +10,6 @@ from app.core.security import get_api_key
 
 
 # pylint: disable=import-error
-from app.core.security import get_api_key
 
 
 @pytest.mark.asyncio
