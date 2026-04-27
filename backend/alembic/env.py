@@ -1,18 +1,18 @@
-import asyncio
-import os
-import sys
-from logging.config import fileConfig
+import asyncio  # noqa: E402
+import os  # noqa: E402
+import sys  # noqa: E402
+from logging.config import fileConfig  # noqa: E402
 
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import pool  # noqa: E402
+from sqlalchemy.engine import Connection  # noqa: E402
+from sqlalchemy.ext.asyncio import async_engine_from_config  # noqa: E402
 
-from alembic import context
+from alembic import context  # noqa: E402
 
 # Add backend directory to path so we can import app modules
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from app.core.database import Base
+from app.core.database import Base  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -25,10 +25,10 @@ if config.config_file_name is not None:
 
 # Overwrite sqlalchemy.url with the one from settings
 import os
+
 database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./sql_app.db")
 config.set_main_option("sqlalchemy.url", database_url)
 
-from app.models.claims import Claim, ClaimPhoto, ClaimAuditLog
 
 # add your model's MetaData object here
 # for 'autogenerate' support

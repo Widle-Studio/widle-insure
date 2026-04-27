@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 
 router = APIRouter()
+
 
 @router.get("/health")
 async def health_check(db: AsyncSession = Depends(get_db)):
@@ -31,5 +32,5 @@ async def health_check(db: AsyncSession = Depends(get_db)):
         "status": "healthy" if db_status == "connected" else "unhealthy",
         "service": "widle-insure-api",
         "database": db_status,
-        "migrations": migration_status
+        "migrations": migration_status,
     }

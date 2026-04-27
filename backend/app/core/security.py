@@ -20,11 +20,14 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 api_key_header_scheme = APIKeyHeader(name="x-api-key", auto_error=False)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/admin/auth/login")
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
 
 def create_access_token(
     subject: Union[str, Any], expires_delta: timedelta = None
@@ -32,12 +35,11 @@ def create_access_token(
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
-            minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-        )
+        expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {"exp": expire, "sub": str(subject)}
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
 
 async def get_api_key(api_key: str = Security(api_key_header_scheme)):
     if api_key and secrets.compare_digest(api_key, settings.API_KEY):
@@ -46,6 +48,7 @@ async def get_api_key(api_key: str = Security(api_key_header_scheme)):
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Could not validate credentials",
     )
+
 
 async def get_current_admin_user(
     db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme)
@@ -56,9 +59,7 @@ async def get_current_admin_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[ALGORITHM]
-        )
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         if email is None:
             raise credentials_exception

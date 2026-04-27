@@ -1,19 +1,26 @@
-import os
 import logging
-from typing import List, Dict, Any
+import os
+from typing import Any, Dict, List
 
 try:
     from ultralytics import YOLO
+
     HAS_YOLO = True
 except ImportError:
     HAS_YOLO = False
 
 logger = logging.getLogger(__name__)
 
+
 class YoloVisionService:
     def __init__(self):
         self.model = None
-        self.classes = {0: "minor_damage", 1: "moderate_damage", 2: "major_damage", 3: "front_bumper"}
+        self.classes = {
+            0: "minor_damage",
+            1: "moderate_damage",
+            2: "major_damage",
+            3: "front_bumper",
+        }
 
         # Load the best weights if they exist (produced by train_yolo.py)
         # Fall back to base yolov8n.pt if not available
@@ -21,11 +28,22 @@ class YoloVisionService:
             try:
                 # __file__ is in backend/app/services
                 # We need to go up to backend/
-                base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-                best_weights_path = os.path.join(base_dir, "scripts", "runs", "damage_assessment", "weights", "best.pt")
+                base_dir = os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
+                best_weights_path = os.path.join(
+                    base_dir,
+                    "scripts",
+                    "runs",
+                    "damage_assessment",
+                    "weights",
+                    "best.pt",
+                )
 
                 if os.path.exists(best_weights_path):
-                    logger.info(f"Loading fine-tuned YOLO model from {best_weights_path}")
+                    logger.info(
+                        f"Loading fine-tuned YOLO model from {best_weights_path}"
+                    )
                     self.model = YOLO(best_weights_path)
                 else:
                     logger.info("Fine-tuned weights not found, using base yolov8n.pt")
@@ -41,7 +59,7 @@ class YoloVisionService:
             return {
                 "status": "error",
                 "message": "YOLO model not loaded or ultralytics not installed",
-                "detections": []
+                "detections": [],
             }
 
         all_detections = []
@@ -81,14 +99,19 @@ class YoloVisionService:
                             damaged_parts.add(class_name)
                             severity = "minor"
 
-                        if severity_levels[severity] > severity_levels[highest_severity_detected]:
+                        if (
+                            severity_levels[severity]
+                            > severity_levels[highest_severity_detected]
+                        ):
                             highest_severity_detected = severity
 
-                        all_detections.append({
-                            "class": class_name,
-                            "confidence": round(conf, 2),
-                            "box": box.xyxy[0].tolist()
-                        })
+                        all_detections.append(
+                            {
+                                "class": class_name,
+                                "confidence": round(conf, 2),
+                                "box": box.xyxy[0].tolist(),
+                            }
+                        )
             except Exception as e:
                 logger.error(f"Error during YOLO inference on {local_path}: {e}")
 
@@ -96,7 +119,8 @@ class YoloVisionService:
             "status": "success",
             "highest_severity": highest_severity_detected,
             "damaged_parts": list(damaged_parts),
-            "detections": all_detections
+            "detections": all_detections,
         }
+
 
 yolo_vision_service = YoloVisionService()
