@@ -9,6 +9,7 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
 from app.api.v1.endpoints import claims, payments, policies
 from app.api.v1.endpoints.admin import auth as admin_auth
