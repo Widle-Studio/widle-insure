@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from app.services.email import EmailService
+
 
 @pytest.mark.asyncio
 async def test_send_email_success():
@@ -11,8 +14,10 @@ async def test_send_email_success():
 
         # Setup getattr to simulate configured settings
         def side_effect(obj, attr, default=None):
-            if attr == "RESEND_API_KEY": return "test_key"
-            if attr == "EMAIL_FROM": return "test@example.com"
+            if attr == "RESEND_API_KEY":
+                return "test_key"
+            if attr == "EMAIL_FROM":
+                return "test@example.com"
             return default
         mock_getattr.side_effect = side_effect
 
