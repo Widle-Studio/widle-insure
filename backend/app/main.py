@@ -1,8 +1,7 @@
 import logging
-import time
 
 import sentry_sdk
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
@@ -56,11 +55,9 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "Accept", "x-api-key"],
 )
 
-<<<<<<< test/login-error-paths-2060354833373583007
+import time
+from fastapi import Request
 
-
-=======
->>>>>>> main
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -81,10 +78,11 @@ async def root():
     """Root endpoint providing a welcome message."""
     return {"message": "Welcome to Widle Insure API"}
 
-<<<<<<< test/login-error-paths-2060354833373583007
-=======
+from app.api.v1.endpoints import payments
+from app.api.v1.endpoints.admin import auth as admin_auth
+from app.api.v1.endpoints.admin import claims as admin_claims
+from app.api.v1.endpoints.health import router as health_router
 
->>>>>>> main
 app.include_router(health_router, tags=["health"])
 app.include_router(
     claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"]

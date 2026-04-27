@@ -81,20 +81,26 @@ class ClaudeAIService:
             asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls)
         )
 
-        content = []
-        for image_block in image_blocks:
-            if image_block:
-                content.append(image_block)
+        try:
+            messages = self._build_messages(
+                image_blocks, vehicle_info, incident_info, vision_result
+            )
+            response = await self.client.ainvoke(messages)
+            return self._parse_json_response(response.content)
 
-        text_prompt = self._build_damage_assessment_prompt(
-            vehicle_info, incident_info, vision_result
-        )
-        content.append({
-            "type": "text",
-            "text": text_prompt
-        })
+        except Exception as e:
+            logger.error(f"Error calling Claude API: {e}")
+            return {
+                "severity": "moderate",
+                "damaged_parts": ["front_bumper", "hood"],
+                "estimated_cost": 2500.00,
+                "confidence": 0.85,
+                "fraud_indicators": [],
+                "reasoning": f"Error occurred during analysis: {str(e)}"
+            }
 
-        system_prompt = """You are an auto insurance claims adjuster. \
+    def _get_system_prompt(self) -> str:
+        return """You are an auto insurance claims adjuster.
 Analyze the vehicle damage photo provided.
 Provide your analysis based on the photo and the provided context.
 You must return the result EXACTLY as a valid JSON object matching this schema:
@@ -108,50 +114,60 @@ You must return the result EXACTLY as a valid JSON object matching this schema:
 }
 Do not include any other text before or after the JSON."""
 
-        try:
-            messages = [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=content)
-            ]
-            response = await self.client.ainvoke(messages)
+    def _build_messages(
+        self,
+        image_blocks: list,
+        vehicle_info: dict,
+        incident_info: dict,
+        vision_result: dict
+    ) -> list:
+        content = []
+        for image_block in image_blocks:
+            if image_block:
+                content.append(image_block)
 
-            response_text = response.content
-            if isinstance(response_text, list):
-                response_text = response_text[0].get("text", "")
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
+        )
+        content.append({
+            "type": "text",
+            "text": text_prompt
+        })
 
-            if "```json" in response_text:
-                json_str = response_text.split("```json")[1].split("```")[0].strip()
-            else:
-                json_str = response_text.strip()
+        return [
+            SystemMessage(content=self._get_system_prompt()),
+            HumanMessage(content=content)
+        ]
 
-            result = json.loads(json_str)
-            return result
+    def _parse_json_response(self, response_text: str | list) -> dict:
+        if isinstance(response_text, list):
+            response_text = response_text[0].get("text", "")
 
-        except Exception as e:
-            logger.error(f"Error calling Claude API: {e}")
-            return {
-                "severity": "moderate",
-                "damaged_parts": ["front_bumper", "hood"],
-                "estimated_cost": 2500.00,
-                "confidence": 0.85,
-                "fraud_indicators": [],
-                "reasoning": f"Error occurred during analysis: {str(e)}"
-            }
+        if "```json" in response_text:
+            json_str = response_text.split("```json")[1].split("```")[0].strip()
+        else:
+            json_str = response_text.strip()
+
+        return json.loads(json_str)
 
     def _build_damage_assessment_prompt(
         self, vehicle_info, incident_info, vision_result
     ):
         vision_context = ""
         if vision_result.get("status") == "success" and vision_result.get("detections"):
+            highest_sev = sanitize_input(
+                vision_result.get('highest_severity', 'unknown')
+            )
+            parts = ', '.join(
+                [sanitize_input(p) for p in vision_result.get('damaged_parts', [])]
+            )
             vision_context = f"""
 <computer_vision_analysis>
 The initial automated computer vision system (YOLOv8) detected the following:
-- Highest Severity Detected: \
-  {sanitize_input(vision_result.get('highest_severity', 'unknown'))}
-- Damaged Parts Detected: \
-  {', '.join([sanitize_input(p) for p in vision_result.get('damaged_parts', [])])}
+- Highest Severity Detected: {highest_sev}
+- Damaged Parts Detected: {parts}
 </computer_vision_analysis>
-Use this computer vision data to inform your cost estimation and final adjudication, \
+Use this computer vision data to inform your cost estimation and final adjudication,
 but ultimately rely on your own visual assessment of the photos provided.
 """
 
