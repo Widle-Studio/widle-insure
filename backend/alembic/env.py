@@ -24,11 +24,11 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Overwrite sqlalchemy.url with the one from settings
-import os
+import os  # noqa: E402
+
 database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./sql_app.db")
 config.set_main_option("sqlalchemy.url", database_url)
 
-from app.models.claims import Claim, ClaimPhoto, ClaimAuditLog
 
 # add your model's MetaData object here
 # for 'autogenerate' support
