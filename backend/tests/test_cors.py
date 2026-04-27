@@ -13,6 +13,7 @@ def _setup_cors_env():
     # The actual issue is that config was already loaded from .env when we run pytest.
     pass
 
+
 def test_cors_preflight():
     from importlib import reload
 
