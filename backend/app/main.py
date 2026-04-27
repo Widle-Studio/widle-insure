@@ -10,7 +10,10 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
-from app.api.v1.endpoints import claims, policies
+from app.api.v1.endpoints import claims, payments, policies
+from app.api.v1.endpoints.admin import auth as admin_auth
+from app.api.v1.endpoints.admin import claims as admin_claims
+from app.api.v1.endpoints.health import router as health_router
 from app.core.config import settings
 from app.core.log_config import setup_logging
 
@@ -36,8 +39,7 @@ logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
 app.state.limiter = limiter
@@ -54,7 +56,6 @@ app.add_middleware(
 )
 
 import time
-
 from fastapi import Request
 
 
@@ -83,9 +84,21 @@ from app.api.v1.endpoints.admin import claims as admin_claims
 from app.api.v1.endpoints.health import router as health_router
 
 app.include_router(health_router, tags=["health"])
-app.include_router(claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"])
-app.include_router(policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"])
-app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"])
+app.include_router(
+    claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"]
+)
+app.include_router(
+    policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"]
+)
+app.include_router(
+    payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"]
+)
 
-app.include_router(admin_auth.router, prefix=f"{settings.API_V1_STR}/admin/auth", tags=["admin-auth"])
-app.include_router(admin_claims.router, prefix=f"{settings.API_V1_STR}/admin/claims", tags=["admin-claims"])
+app.include_router(
+    admin_auth.router, prefix=f"{settings.API_V1_STR}/admin/auth", tags=["admin-auth"]
+)
+app.include_router(
+    admin_claims.router,
+    prefix=f"{settings.API_V1_STR}/admin/claims",
+    tags=["admin-claims"],
+)

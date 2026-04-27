@@ -74,12 +74,12 @@ class ClaudeAIService:
                 "reasoning": "Mock analysis - implement Claude API"
             }
 
-        # Concurrently encode images
+        # Concurrently encode images and run YOLO inference
         encode_tasks = [self._encode_image(url) for url in photo_urls]
-        image_blocks = await asyncio.gather(*encode_tasks)
-
-        # Run local YOLO inference
-        vision_result = yolo_vision_service.detect_damage(photo_urls)
+        image_blocks, vision_result = await asyncio.gather(
+            asyncio.gather(*encode_tasks),
+            asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls)
+        )
 
         try:
             messages = self._build_messages(
