@@ -40,8 +40,7 @@ logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
 app.state.limiter = limiter
@@ -57,8 +56,11 @@ app.add_middleware(
     allow_headers=["Content-Type", "Authorization", "Accept", "x-api-key"],
 )
 
+<<<<<<< test/login-error-paths-2060354833373583007
 
 
+=======
+>>>>>>> main
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -79,10 +81,26 @@ async def root():
     """Root endpoint providing a welcome message."""
     return {"message": "Welcome to Widle Insure API"}
 
-app.include_router(health_router, tags=["health"])
-app.include_router(claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"])
-app.include_router(policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"])
-app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"])
+<<<<<<< test/login-error-paths-2060354833373583007
+=======
 
-app.include_router(admin_auth.router, prefix=f"{settings.API_V1_STR}/admin/auth", tags=["admin-auth"])
-app.include_router(admin_claims.router, prefix=f"{settings.API_V1_STR}/admin/claims", tags=["admin-claims"])
+>>>>>>> main
+app.include_router(health_router, tags=["health"])
+app.include_router(
+    claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"]
+)
+app.include_router(
+    policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"]
+)
+app.include_router(
+    payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"]
+)
+
+app.include_router(
+    admin_auth.router, prefix=f"{settings.API_V1_STR}/admin/auth", tags=["admin-auth"]
+)
+app.include_router(
+    admin_claims.router,
+    prefix=f"{settings.API_V1_STR}/admin/claims",
+    tags=["admin-claims"],
+)
