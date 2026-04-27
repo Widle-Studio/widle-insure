@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
 from app.services.email import EmailService
+
 
 @pytest.mark.asyncio
 async def test_send_email_success():
