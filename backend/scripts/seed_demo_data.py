@@ -1,20 +1,20 @@
-import asyncio
-import os
-import random
-import secrets
-import string
-import sys
-from datetime import datetime, timedelta
+import asyncio  # noqa: E402
+import os  # noqa: E402
+import random  # noqa: E402
+import secrets  # noqa: E402
+import string  # noqa: E402
+import sys  # noqa: E402
+from datetime import datetime, timedelta  # noqa: E402
 
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.core.config import settings
-from app.core.security import get_password_hash
-from app.models.claims import Claim, ClaimPhoto
-from app.models.users import AdminUser
+from app.core.config import settings  # noqa: E402
+from app.core.security import get_password_hash  # noqa: E402
+from app.models.claims import Claim, ClaimPhoto  # noqa: E402
+from app.models.users import AdminUser  # noqa: E402
 
 # Generate some realistic-looking dummy data
 first_names = ["James", "Mary", "Robert", "Patricia", "John", "Jennifer", "Michael", "Linda", "David", "Elizabeth", "William", "Barbara", "Richard", "Susan", "Joseph", "Jessica", "Thomas", "Sarah", "Charles", "Karen"]

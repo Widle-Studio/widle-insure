@@ -1,16 +1,16 @@
 """Create initial admin user from environment variables"""
-import asyncio
-import os
-import sys
+import asyncio  # noqa: E402
+import os  # noqa: E402
+import sys  # noqa: E402
 
-from sqlalchemy import select
+from sqlalchemy import select  # noqa: E402
 
 # Add backend to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from app.core.database import AsyncSessionLocal
-from app.core.security import get_password_hash
-from app.models.users import User
+from app.core.database import AsyncSessionLocal  # noqa: E402
+from app.core.security import get_password_hash  # noqa: E402
+from app.models.users import User  # noqa: E402
 
 
 async def create_admin():
