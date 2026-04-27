@@ -37,10 +37,10 @@ class EmailService:
             logger.info(f"Mock sending email to: {to}")
             logger.info(f"Subject: {subject}")
             logger.info(f"Body: {body}")
-            print(f"--- MOCK EMAIL ---")
+            print("--- MOCK EMAIL ---")
             print(f"To: {to}")
             print(f"Subject: {subject}")
             print(f"Body: {body}")
-            print(f"------------------")
+            print("------------------")
 
 email_service = EmailService()
