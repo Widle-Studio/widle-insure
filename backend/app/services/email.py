@@ -7,6 +7,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 class EmailService:
     def __init__(self):
         if getattr(settings, "RESEND_API_KEY", None):
@@ -27,12 +28,16 @@ class EmailService:
                     "from": getattr(settings, "EMAIL_FROM", "test@example.com"),
                     "to": [to],
                     "subject": subject,
-                    "html": body
+                    "html": body,
                 }
                 email_res = await asyncio.to_thread(resend.Emails.send, params)
-                logger.info(f"Email successfully sent. ID: {email_res.get('id', 'unknown')}")
+                logger.info(
+                    f"Email successfully sent. ID: {email_res.get('id', 'unknown')}"
+                )
             except Exception as e:
-                logger.error(f"Failed to send email to {to} via Resend. Error: {str(e)}")
+                logger.error(
+                    f"Failed to send email to {to} via Resend. Error: {str(e)}"
+                )
         else:
             logger.info(f"Mock sending email to: {to}")
             logger.info(f"Subject: {subject}")
@@ -42,5 +47,6 @@ class EmailService:
             print(f"Subject: {subject}")
             print(f"Body: {body}")
             print("------------------")
+
 
 email_service = EmailService()

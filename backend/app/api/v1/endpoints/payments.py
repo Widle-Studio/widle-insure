@@ -20,8 +20,15 @@ router = APIRouter()
 # Configure Stripe API Key
 stripe.api_key = getattr(settings, "STRIPE_SECRET_KEY", None)
 
-@router.post("/{claim_id}/payout", response_model=ClaimResponse, dependencies=[Depends(get_api_key)])
-async def initiate_payout(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> Any:
+
+@router.post(
+    "/{claim_id}/payout",
+    response_model=ClaimResponse,
+    dependencies=[Depends(get_api_key)],
+)
+async def initiate_payout(
+    claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)
+) -> Any:
     """
     Initiate Stripe ACH/transfer payout for a claim.
     """
@@ -32,7 +39,9 @@ async def initiate_payout(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db
         raise HTTPException(status_code=404, detail="Claim not found")
 
     if claim.status != "Approved":
-        raise HTTPException(status_code=400, detail="Only approved claims can be paid out")
+        raise HTTPException(
+            status_code=400, detail="Only approved claims can be paid out"
+        )
 
     # The actual Stripe integration
     try:
@@ -43,7 +52,9 @@ async def initiate_payout(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db
             mock_destination = "acct_1032D82eZvKYlo2C"
 
             # Amount is expected in cents
-            amount_in_cents = int(claim.approved_amount * 100) if claim.approved_amount else 0
+            amount_in_cents = (
+                int(claim.approved_amount * 100) if claim.approved_amount else 0
+            )
 
             if amount_in_cents > 0:
                 # Synchronous Stripe API calls. Depending on load, might wrap in asyncio.to_thread()
@@ -51,7 +62,7 @@ async def initiate_payout(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db
                     amount=amount_in_cents,
                     currency="usd",
                     destination=mock_destination,
-                    description=f"Insurance claim payout: {claim.claim_number}"
+                    description=f"Insurance claim payout: {claim.claim_number}",
                 )
                 transfer_id = transfer.id
             else:
@@ -62,10 +73,14 @@ async def initiate_payout(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error during payout for claim {claim_id}: {str(e)}")
-        raise HTTPException(status_code=502, detail=f"Payment gateway error: {e.user_message}")
+        raise HTTPException(
+            status_code=502, detail=f"Payment gateway error: {e.user_message}"
+        )
     except Exception as e:
         logger.error(f"Unexpected error during payout: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error during payout")
+        raise HTTPException(
+            status_code=500, detail="Internal server error during payout"
+        )
 
     claim.status = "Paid"
     # Note: A real implementation would store transfer_id in a new column on the Claim model
