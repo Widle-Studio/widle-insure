@@ -37,6 +37,7 @@ async def test_analyze_claim_not_found():
     assert response.status_code == 404
     assert response.json()["detail"] == "Claim not found"
 
+
 @pytest.mark.asyncio
 async def test_analyze_claim_no_photos(mock_claim_class):
     auth_headers = {"x-api-key": settings.API_KEY}
