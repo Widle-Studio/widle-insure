@@ -77,8 +77,8 @@ class ClaudeAIService:
         encode_tasks = [self._encode_image(url) for url in photo_urls]
         image_blocks = await asyncio.gather(*encode_tasks)
 
-        # Run local YOLO inference
-        vision_result = yolo_vision_service.detect_damage(photo_urls)
+        # Run local YOLO inference without blocking the event loop
+        vision_result = await asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls)
 
         content = []
         for image_block in image_blocks:
