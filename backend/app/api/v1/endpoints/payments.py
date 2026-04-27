@@ -53,19 +53,19 @@ async def initiate_payout(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db
                     destination=mock_destination,
                     description=f"Insurance claim payout: {claim.claim_number}"
                 )
-                transfer_id = transfer.id
+                _transfer_id = transfer.id
             else:
                 raise ValueError("Approved amount must be greater than zero.")
         else:
             logger.info("STRIPE_SECRET_KEY not set. Mocking Stripe payout transfer.")
-            transfer_id = f"tr_{secrets.token_hex(12)}"
+            _transfer_id = f"tr_{secrets.token_hex(12)}"
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error during payout for claim {claim_id}: {str(e)}")
-        raise HTTPException(status_code=502, detail=f"Payment gateway error: {e.user_message}")
+        raise HTTPException(status_code=502, detail=f"Payment gateway error: {e.user_message}") from e
     except Exception as e:
         logger.error(f"Unexpected error during payout: {str(e)}")
-        raise HTTPException(status_code=500, detail="Internal server error during payout")
+        raise HTTPException(status_code=500, detail="Internal server error during payout") from e
 
     claim.status = "Paid"
     # Note: A real implementation would store transfer_id in a new column on the Claim model
