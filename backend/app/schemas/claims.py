@@ -37,8 +37,10 @@ class ClaimBase(BaseModel):
             raise ValueError("Incident date cannot be in the future")
         return v
 
+
 class ClaimCreate(ClaimBase):
     pass
+
 
 class ClaimPhotoResponse(BaseModel):
     id: UUID
@@ -48,6 +50,7 @@ class ClaimPhotoResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class ClaimResponse(ClaimBase):
     id: UUID
     claim_number: str
@@ -55,5 +58,17 @@ class ClaimResponse(ClaimBase):
     created_at: datetime
     updated_at: datetime
     photos: List[ClaimPhotoResponse] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ClaimPublicStatusResponse(BaseModel):
+    claim_number: str
+    status: str
+    vehicle_year: Optional[int] = None
+    vehicle_make: Optional[str] = None
+    vehicle_model: Optional[str] = None
+    created_at: datetime
+    approved_amount: Optional[float] = None
 
     model_config = ConfigDict(from_attributes=True)
