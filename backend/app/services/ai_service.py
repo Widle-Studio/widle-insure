@@ -108,6 +108,21 @@ class ClaudeAIService:
             HumanMessage(content=content)
         ]
 
+            asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls),
+        )
+
+        try:
+            messages = self._build_messages(
+                image_blocks, vehicle_info, incident_info, vision_result
+            )
+            response = await self.client.ainvoke(messages)
+            return self._parse_json_response(response.content)
+
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
+        )
+        content.append({"type": "text", "text": text_prompt})
+        
     def _get_system_prompt(self) -> str:
         return """You are an auto insurance claims adjuster.
 Analyze the vehicle damage photo provided.
