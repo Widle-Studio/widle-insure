@@ -68,3 +68,25 @@ async def test_analyze_claim_no_photos(mock_claim_class):
 
     assert response.status_code == 400
     assert response.json()["detail"] == "No photos to analyze"
+
+@pytest.mark.asyncio
+async def test_analyze_claim_unauthorized():
+    claim_id = uuid.uuid4()
+
+    # Do not include the auth header
+    transport = ASGITransport(app=app)
+
+    mock_db = AsyncMock()
+    async def override_get_db():
+        yield mock_db
+    app.dependency_overrides[get_db] = override_get_db
+
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            f"{settings.API_V1_STR}/claims/{claim_id}/analyze",
+        )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 403
+    assert response.json()["detail"] == "Could not validate credentials"

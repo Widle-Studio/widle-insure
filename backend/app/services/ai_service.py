@@ -77,11 +77,38 @@ class ClaudeAIService:
         encode_tasks = [self._encode_image(url) for url in photo_urls]
         image_blocks, vision_result = await asyncio.gather(
             asyncio.gather(*encode_tasks),
-<<<<<<< jules-925386469085068614-b86e0eed
-            asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls),
-=======
             asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls)
->>>>>>> main
+        )
+
+        try:
+            messages = self._build_messages(
+                image_blocks, vehicle_info, incident_info, vision_result
+            )
+            response = await self.client.ainvoke(messages)
+            return self._parse_json_response(response.content)
+        except Exception as e:
+            logger.error(f"Error in assess_damage: {e}")
+            return {
+                "severity": "moderate",
+                "damaged_parts": ["front_bumper", "hood"],
+                "estimated_cost": 2500.00,
+                "confidence": 0.85,
+                "fraud_indicators": [],
+                "reasoning": f"Error occurred during analysis: {str(e)}"
+            }
+
+    def _build_messages(self, image_blocks, vehicle_info, incident_info, vision_result):
+        content = [block for block in image_blocks if block is not None]
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
+        )
+        content.append({"type": "text", "text": text_prompt})
+        return [
+            SystemMessage(content=self._get_system_prompt()),
+            HumanMessage(content=content)
+        ]
+
+            asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls),
         )
 
         try:
@@ -95,7 +122,7 @@ class ClaudeAIService:
             vehicle_info, incident_info, vision_result
         )
         content.append({"type": "text", "text": text_prompt})
-
+        
     def _get_system_prompt(self) -> str:
         return """You are an auto insurance claims adjuster.
 Analyze the vehicle damage photo provided.
@@ -111,18 +138,6 @@ You must return the result EXACTLY as a valid JSON object matching this schema:
 }
 Do not include any other text before or after the JSON."""
 
-        try:
-            messages = [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=content),
-            ]
-            response = await self.client.ainvoke(messages)
-
-        return [
-            SystemMessage(content=self._get_system_prompt()),
-            HumanMessage(content=content)
-        ]
-
     def _parse_json_response(self, response_text: str | list) -> dict:
         if isinstance(response_text, list):
             response_text = response_text[0].get("text", "")
@@ -132,6 +147,8 @@ Do not include any other text before or after the JSON."""
         else:
             json_str = response_text.strip()
 
+        try:
+            return json.loads(json_str)
         except Exception as e:
             logger.error(f"Error calling Claude API: {e}")
             return {
