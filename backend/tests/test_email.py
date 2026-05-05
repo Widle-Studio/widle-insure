@@ -20,6 +20,7 @@ async def test_send_email_success():
             if attr == "EMAIL_FROM":
                 return "test@example.com"
             return default
+
         mock_getattr.side_effect = side_effect
 
         # Initialize service with mocked settings
@@ -41,6 +42,7 @@ async def test_send_email_success():
         )
         mock_logger.info.assert_any_call("Email successfully sent. ID: test_id")
 
+
 @pytest.mark.asyncio
 async def test_send_email_failure():
     """Test error handling when Resend API fails."""
@@ -50,7 +52,9 @@ async def test_send_email_failure():
          patch("app.services.email.asyncio.to_thread") as mock_to_thread:
 
         # Setup getattr to simulate configured settings
-        mock_getattr.side_effect = lambda obj, attr, default=None: "test_value" if attr in ["RESEND_API_KEY", "EMAIL_FROM"] else default
+        mock_getattr.side_effect = lambda obj, attr, default=None: (
+            "test_value" if attr in ["RESEND_API_KEY", "EMAIL_FROM"] else default
+        )
 
         service = EmailService()
         assert service.enabled is True
@@ -73,12 +77,14 @@ async def test_send_email_failure():
             "Failed to send email to recipient@example.com via Resend. Error: Resend API Error"
         )
 
+
 @pytest.mark.asyncio
 async def test_send_email_disabled():
     """Test mock email sending when Resend API is disabled."""
-    with patch("app.services.email.logger") as mock_logger, \
-         patch("app.services.email.getattr") as mock_getattr:
-
+    with (
+        patch("app.services.email.logger") as mock_logger,
+        patch("app.services.email.getattr") as mock_getattr,
+    ):
         # Setup getattr to simulate missing API key
         mock_getattr.return_value = None
 

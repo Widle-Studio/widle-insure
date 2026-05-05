@@ -17,6 +17,7 @@ from app.api.v1.endpoints.admin import claims as admin_claims
 from app.api.v1.endpoints.health import router as health_router
 from app.core.config import settings
 from app.core.log_config import setup_logging
+from app.core.rate_limit import limiter
 
 # Configure logging on startup
 setup_logging()
@@ -37,11 +38,8 @@ if settings.SENTRY_DSN:
 logger = logging.getLogger(__name__)
 
 # Configure Rate Limiter
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
-
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    openapi_url=f"{settings.API_V1_STR}/openapi.json"
+    title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
 app.state.limiter = limiter
@@ -81,9 +79,21 @@ async def root():
 
 
 app.include_router(health_router, tags=["health"])
-app.include_router(claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"])
-app.include_router(policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"])
-app.include_router(payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"])
+app.include_router(
+    claims.router, prefix=f"{settings.API_V1_STR}/claims", tags=["claims"]
+)
+app.include_router(
+    policies.router, prefix=f"{settings.API_V1_STR}/policies", tags=["policies"]
+)
+app.include_router(
+    payments.router, prefix=f"{settings.API_V1_STR}/payments", tags=["payments"]
+)
 
-app.include_router(admin_auth.router, prefix=f"{settings.API_V1_STR}/admin/auth", tags=["admin-auth"])
-app.include_router(admin_claims.router, prefix=f"{settings.API_V1_STR}/admin/claims", tags=["admin-claims"])
+app.include_router(
+    admin_auth.router, prefix=f"{settings.API_V1_STR}/admin/auth", tags=["admin-auth"]
+)
+app.include_router(
+    admin_claims.router,
+    prefix=f"{settings.API_V1_STR}/admin/claims",
+    tags=["admin-claims"],
+)
