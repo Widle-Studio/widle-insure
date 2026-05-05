@@ -73,26 +73,49 @@ class ClaudeAIService:
                 "reasoning": "Mock analysis - implement Claude API",
             }
 
-        # Concurrently encode images
+        # Concurrently encode images and run YOLO inference
         encode_tasks = [self._encode_image(url) for url in photo_urls]
-        image_blocks = await asyncio.gather(*encode_tasks)
+        image_blocks, vision_result = await asyncio.gather(
+            asyncio.gather(*encode_tasks),
+            asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls)
+        )
 
         # Run local YOLO inference without blocking the event loop
         vision_result = await asyncio.to_thread(
             yolo_vision_service.detect_damage, photo_urls
         )
 
-        content = []
-        for image_block in image_blocks:
-            if image_block:
-                content.append(image_block)
+    def _build_messages(self, image_blocks, vehicle_info, incident_info, vision_result):
+        content = [block for block in image_blocks if block is not None]
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
+        )
+        content.append({"type": "text", "text": text_prompt})
+        return [
+            SystemMessage(content=self._get_system_prompt()),
+            HumanMessage(content=content)
+        ]
 
         text_prompt = self._build_damage_assessment_prompt(
             vehicle_info, incident_info, vision_result
         )
         content.append({"type": "text", "text": text_prompt})
 
-        system_prompt = """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
+        try:
+            messages = self._build_messages(
+                image_blocks, vehicle_info, incident_info, vision_result
+            )
+            response = await self.client.ainvoke(messages)
+            return self._parse_json_response(response.content)
+
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
+        )
+        content.append({"type": "text", "text": text_prompt})
+        
+    def _get_system_prompt(self) -> str:
+        return """You are an auto insurance claims adjuster.
+Analyze the vehicle damage photo provided.
 Provide your analysis based on the photo and the provided context.
 You must return the result EXACTLY as a valid JSON object matching this schema:
 {
@@ -121,9 +144,13 @@ Do not include any other text before or after the JSON."""
             else:
                 json_str = response_text.strip()
 
-            result = json.loads(json_str)
-            return result
+        if "```json" in response_text:
+            json_str = response_text.split("```json")[1].split("```")[0].strip()
+        else:
+            json_str = response_text.strip()
 
+        try:
+            return json.loads(json_str)
         except Exception as e:
             logger.error(f"Error calling Claude API: {e}")
             return {
@@ -140,13 +167,20 @@ Do not include any other text before or after the JSON."""
     ):
         vision_context = ""
         if vision_result.get("status") == "success" and vision_result.get("detections"):
+            highest_sev = sanitize_input(
+                vision_result.get('highest_severity', 'unknown')
+            )
+            parts = ', '.join(
+                [sanitize_input(p) for p in vision_result.get('damaged_parts', [])]
+            )
             vision_context = f"""
 <computer_vision_analysis>
 The initial automated computer vision system (YOLOv8) detected the following:
 - Highest Severity Detected: {sanitize_input(vision_result.get("highest_severity", "unknown"))}
 - Damaged Parts Detected: {", ".join([sanitize_input(p) for p in vision_result.get("damaged_parts", [])])}
 </computer_vision_analysis>
-Use this computer vision data to inform your cost estimation and final adjudication, but ultimately rely on your own visual assessment of the photos provided.
+Use this computer vision data to inform your cost estimation and final adjudication,
+but ultimately rely on your own visual assessment of the photos provided.
 """
 
         return f"""Here is the context for the claim:

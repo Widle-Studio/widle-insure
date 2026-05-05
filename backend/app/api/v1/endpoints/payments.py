@@ -58,18 +58,17 @@ async def initiate_payout(
 
             if amount_in_cents > 0:
                 # Synchronous Stripe API calls. Depending on load, might wrap in asyncio.to_thread()
-                transfer = stripe.Transfer.create(
+                stripe.Transfer.create(
                     amount=amount_in_cents,
                     currency="usd",
                     destination=mock_destination,
                     description=f"Insurance claim payout: {claim.claim_number}",
                 )
-                transfer_id = transfer.id
             else:
                 raise ValueError("Approved amount must be greater than zero.")
         else:
             logger.info("STRIPE_SECRET_KEY not set. Mocking Stripe payout transfer.")
-            transfer_id = f"tr_{secrets.token_hex(12)}"
+            f"tr_{secrets.token_hex(12)}"
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error during payout for claim {claim_id}: {str(e)}")

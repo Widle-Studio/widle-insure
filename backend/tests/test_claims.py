@@ -228,3 +228,63 @@ async def test_get_claim_not_found(mock_db_session):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Claim not found"
+
+
+@pytest.mark.asyncio
+async def test_lookup_claim_security(
+    valid_claim_payload: dict, mock_db_session, mock_claim_class
+):
+    """
+    Test that the public lookup endpoint returns the restricted ClaimPublicStatusResponse
+    and does not expose PII like claimant_name or claimant_email. Also verifies rate limiting.
+    """
+    from app.core.database import get_db
+
+    claim_id = "123e4567-e89b-12d3-a456-426614174000"
+    claim_number = "CLM-2024-001234"
+
+    mock_claim = mock_claim_class(claim_id, valid_claim_payload)
+    mock_claim.approved_amount = 1000.50
+    mock_db = mock_db_session(execute_result=mock_claim)
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Verify response structure and PII absence
+        response = await client.get(
+            f"{settings.API_V1_STR}/claims/lookup/{claim_number}",
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        # Must include safe fields
+        assert data["claim_number"] == claim_number
+        assert data["status"] == "New"
+        assert data["vehicle_year"] == valid_claim_payload["vehicle_year"]
+        assert data["vehicle_make"] == valid_claim_payload["vehicle_make"]
+        assert data["vehicle_model"] == valid_claim_payload["vehicle_model"]
+        assert data["approved_amount"] == 1000.50
+        assert "created_at" in data
+
+        # Must NOT include PII
+        assert "claimant_name" not in data
+        assert "claimant_email" not in data
+        assert "claimant_phone" not in data
+        assert "incident_location" not in data
+        assert "incident_description" not in data
+
+        # 2. Verify Rate Limiting (limit is 10/minute, we already made 1 request)
+        for _ in range(10):
+            response = await client.get(
+                f"{settings.API_V1_STR}/claims/lookup/{claim_number}"
+            )
+
+        # The 11th request (or 12th total) should hit the rate limit
+        assert response.status_code == 429
+        assert "Rate limit exceeded" in response.text
+
+    app.dependency_overrides.clear()

@@ -10,9 +10,13 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 from slowapi.util import get_remote_address
 
-from app.api.v1.endpoints import claims, policies
+from app.api.v1.endpoints import claims, payments, policies
+from app.api.v1.endpoints.admin import auth as admin_auth
+from app.api.v1.endpoints.admin import claims as admin_claims
+from app.api.v1.endpoints.health import router as health_router
 from app.core.config import settings
 from app.core.log_config import setup_logging
+from app.core.rate_limit import limiter
 
 # Configure logging on startup
 setup_logging()
@@ -33,8 +37,6 @@ if settings.SENTRY_DSN:
 logger = logging.getLogger(__name__)
 
 # Configure Rate Limiter
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
-
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
