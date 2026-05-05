@@ -92,9 +92,12 @@ class ClaudeAIService:
         )
         content.append({"type": "text", "text": text_prompt})
 
-    def _get_system_prompt(self) -> str:
-        return """You are an auto insurance claims adjuster.
-Analyze the vehicle damage photo provided.
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
+        )
+        content.append({"type": "text", "text": text_prompt})
+
+        system_prompt = """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
 Provide your analysis based on the photo and the provided context.
 You must return the result EXACTLY as a valid JSON object matching this schema:
 {

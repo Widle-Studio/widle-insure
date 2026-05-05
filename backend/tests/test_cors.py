@@ -16,6 +16,8 @@ def _setup_cors_env():
     pass
 
 
+from fastapi.testclient import TestClient
+
 
 def test_cors_preflight():
     from importlib import reload

@@ -10,9 +10,9 @@ def test_setup_logging_configures_basic_config():
     Test that setup_logging configures basicConfig correctly and sets
     the expected format and handlers.
     """
-    with patch("app.core.log_config.logging.basicConfig") as mock_basic_config, \
-         patch("app.core.log_config.logging.getLogger"):
-
+    with patch("app.core.log_config.logging.basicConfig") as mock_basic_config, patch(
+        "app.core.log_config.logging.getLogger"
+    ):
         setup_logging()
 
         # Verify basicConfig was called correctly
@@ -33,10 +33,9 @@ def test_setup_logging_configures_third_party_loggers():
     """
     Test that setup_logging configures specific levels for third-party loggers.
     """
-    with (
-        patch("app.core.log_config.logging.basicConfig"),
-        patch("app.core.log_config.logging.getLogger") as mock_get_logger,
-    ):
+    with patch("app.core.log_config.logging.basicConfig"), patch(
+        "app.core.log_config.logging.getLogger"
+    ) as mock_get_logger:
         # We need to mock the loggers returned by getLogger so we can check setLevel
         uvicorn_logger_mock = MagicMock()
         sqlalchemy_logger_mock = MagicMock()

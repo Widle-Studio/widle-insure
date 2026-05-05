@@ -8,11 +8,9 @@ from app.services.email import EmailService
 @pytest.mark.asyncio
 async def test_send_email_success():
     """Test successful email sending with Resend API enabled."""
-    with patch("app.services.email.resend") as mock_resend, \
-         patch("app.services.email.logger") as mock_logger, \
-         patch("app.services.email.getattr") as mock_getattr, \
-         patch("app.services.email.asyncio.to_thread") as mock_to_thread:
-
+    with patch("app.services.email.resend") as mock_resend, patch(
+        "app.services.email.logger"
+    ) as mock_logger, patch("app.services.email.getattr") as mock_getattr:
         # Setup getattr to simulate configured settings
         def side_effect(obj, attr, default=None):
             if attr == "RESEND_API_KEY":
@@ -46,14 +44,14 @@ async def test_send_email_success():
 @pytest.mark.asyncio
 async def test_send_email_failure():
     """Test error handling when Resend API fails."""
-    with patch("app.services.email.resend") as mock_resend, \
-         patch("app.services.email.logger") as mock_logger, \
-         patch("app.services.email.getattr") as mock_getattr, \
-         patch("app.services.email.asyncio.to_thread") as mock_to_thread:
-
+    with patch("app.services.email.resend") as mock_resend, patch(
+        "app.services.email.logger"
+    ) as mock_logger, patch("app.services.email.getattr") as mock_getattr:
         # Setup getattr to simulate configured settings
-        mock_getattr.side_effect = lambda obj, attr, default=None: (
-            "test_value" if attr in ["RESEND_API_KEY", "EMAIL_FROM"] else default
+        mock_getattr.side_effect = (
+            lambda obj, attr, default=None: "test_value"
+            if attr in ["RESEND_API_KEY", "EMAIL_FROM"]
+            else default
         )
 
         service = EmailService()
@@ -81,10 +79,9 @@ async def test_send_email_failure():
 @pytest.mark.asyncio
 async def test_send_email_disabled():
     """Test mock email sending when Resend API is disabled."""
-    with (
-        patch("app.services.email.logger") as mock_logger,
-        patch("app.services.email.getattr") as mock_getattr,
-    ):
+    with patch("app.services.email.logger") as mock_logger, patch(
+        "app.services.email.getattr"
+    ) as mock_getattr:
         # Setup getattr to simulate missing API key
         mock_getattr.return_value = None
 

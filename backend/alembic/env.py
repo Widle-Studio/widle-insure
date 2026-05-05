@@ -27,6 +27,7 @@ if config.config_file_name is not None:
 
 
 # Overwrite sqlalchemy.url with the one from settings
+import os
 
 database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./sql_app.db")
 config.set_main_option("sqlalchemy.url", database_url)

@@ -6,7 +6,6 @@ import pytest
 from fastapi import HTTPException
 
 from app.core.config import settings
-from app.core.security import get_api_key
 
 # pylint: disable=import-error
 
