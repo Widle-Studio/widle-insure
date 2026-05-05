@@ -29,10 +29,8 @@ async def create_admin():
             return
 
         # Create admin user
-        admin = AdminUser(
-            email=email,
-            hashed_password=get_password_hash(password),
-            is_superuser=True
+        admin = User(
+            email=email, hashed_password=get_password_hash(password), is_admin=True
         )
         db.add(admin)
         await db.commit()

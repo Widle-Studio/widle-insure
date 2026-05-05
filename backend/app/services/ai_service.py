@@ -22,12 +22,16 @@ def sanitize_input(text: str) -> str:
 
 class ClaudeAIService:
     def __init__(self):
-        api_key = getattr(settings, 'ANTHROPIC_API_KEY', None)
-        self.client = ChatAnthropic(
-            model_name="claude-3-5-sonnet-20241022",
-            anthropic_api_key=api_key,
-            max_tokens=1024
-        ) if api_key else None
+        api_key = getattr(settings, "ANTHROPIC_API_KEY", None)
+        self.client = (
+            ChatAnthropic(
+                model_name="claude-3-5-sonnet-20241022",
+                anthropic_api_key=api_key,
+                max_tokens=1024,
+            )
+            if api_key
+            else None
+        )
 
     async def _encode_image(self, photo_path: str) -> dict | None:
         """Read a local image file and encode it as base64 for Anthropic API."""
@@ -49,9 +53,7 @@ class ClaudeAIService:
 
             return {
                 "type": "image_url",
-                "image_url": {
-                    "url": f"data:{media_type};base64,{base64_image}"
-                }
+                "image_url": {"url": f"data:{media_type};base64,{base64_image}"},
             }
         except Exception as e:
             logger.error(f"Error encoding image {photo_path}: {e}")
@@ -85,16 +87,10 @@ class ClaudeAIService:
             response = await self.client.ainvoke(messages)
             return self._parse_json_response(response.content)
 
-        except Exception as e:
-            logger.error(f"Error calling Claude API: {e}")
-            return {
-                "severity": "moderate",
-                "damaged_parts": ["front_bumper", "hood"],
-                "estimated_cost": 2500.00,
-                "confidence": 0.85,
-                "fraud_indicators": [],
-                "reasoning": f"Error occurred during analysis: {str(e)}"
-            }
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
+        )
+        content.append({"type": "text", "text": text_prompt})
 
     def _get_system_prompt(self) -> str:
         return """You are an auto insurance claims adjuster.
@@ -111,17 +107,12 @@ You must return the result EXACTLY as a valid JSON object matching this schema:
 }
 Do not include any other text before or after the JSON."""
 
-    def _build_messages(
-        self,
-        image_blocks: list,
-        vehicle_info: dict,
-        incident_info: dict,
-        vision_result: dict
-    ) -> list:
-        content = []
-        for image_block in image_blocks:
-            if image_block:
-                content.append(image_block)
+        try:
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=content),
+            ]
+            response = await self.client.ainvoke(messages)
 
         text_prompt = self._build_damage_assessment_prompt(
             vehicle_info, incident_info, vision_result
@@ -140,12 +131,16 @@ Do not include any other text before or after the JSON."""
         if isinstance(response_text, list):
             response_text = response_text[0].get("text", "")
 
-        if "```json" in response_text:
-            json_str = response_text.split("```json")[1].split("```")[0].strip()
-        else:
-            json_str = response_text.strip()
-
-        return json.loads(json_str)
+        except Exception as e:
+            logger.error(f"Error calling Claude API: {e}")
+            return {
+                "severity": "moderate",
+                "damaged_parts": ["front_bumper", "hood"],
+                "estimated_cost": 2500.00,
+                "confidence": 0.85,
+                "fraud_indicators": [],
+                "reasoning": f"Error occurred during analysis: {str(e)}",
+            }
 
     def _build_damage_assessment_prompt(
         self, vehicle_info, incident_info, vision_result
@@ -161,8 +156,8 @@ Do not include any other text before or after the JSON."""
             vision_context = f"""
 <computer_vision_analysis>
 The initial automated computer vision system (YOLOv8) detected the following:
-- Highest Severity Detected: {highest_sev}
-- Damaged Parts Detected: {parts}
+- Highest Severity Detected: {sanitize_input(vision_result.get("highest_severity", "unknown"))}
+- Damaged Parts Detected: {", ".join([sanitize_input(p) for p in vision_result.get("damaged_parts", [])])}
 </computer_vision_analysis>
 Use this computer vision data to inform your cost estimation and final adjudication,
 but ultimately rely on your own visual assessment of the photos provided.
@@ -181,5 +176,6 @@ but ultimately rely on your own visual assessment of the photos provided.
 {vision_context}
 Be conservative in your estimates. If unsure, flag for human review.
 """
+
 
 ai_service = ClaudeAIService()

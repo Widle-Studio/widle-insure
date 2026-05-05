@@ -23,9 +23,8 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-# Overwrite sqlalchemy.url with the one from settings
-import os
 
+# Overwrite sqlalchemy.url with the one from settings
 database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./sql_app.db")
 config.set_main_option("sqlalchemy.url", database_url)
 
