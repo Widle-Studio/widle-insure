@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from fastapi.testclient import TestClient
 
 # Set environment variable before importing app to configure CORS for tests
 os.environ["BACKEND_CORS_ORIGINS"] = '["http://localhost:3000"]'
@@ -13,9 +14,6 @@ def _setup_cors_env():
     # but setting env should be sufficient if we also reset the origin list if it is a dynamic router)
     # The actual issue is that config was already loaded from .env when we run pytest.
     pass
-
-
-from fastapi.testclient import TestClient
 
 
 def test_cors_preflight():

@@ -10,10 +10,6 @@ from app.models.claims import Claim
 from app.services.adjudication_service import adjudication_service
 from app.services.ai_service import ai_service
 from app.services.email import email_service
-from sqlalchemy.future import select
-from sqlalchemy import update
-from sqlalchemy.orm import selectinload
-from app.models.claims import ClaimPhoto
 
 logger = logging.getLogger(__name__)
 

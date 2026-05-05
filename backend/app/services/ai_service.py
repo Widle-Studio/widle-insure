@@ -80,22 +80,10 @@ class ClaudeAIService:
             asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls)
         )
 
-        try:
-            messages = self._build_messages(
-                image_blocks, vehicle_info, incident_info, vision_result
-            )
-            response = await self.client.ainvoke(messages)
-            return self._parse_json_response(response.content)
-        except Exception as e:
-            logger.error(f"Error in assess_damage: {e}")
-            return {
-                "severity": "moderate",
-                "damaged_parts": ["front_bumper", "hood"],
-                "estimated_cost": 2500.00,
-                "confidence": 0.85,
-                "fraud_indicators": [],
-                "reasoning": f"Error occurred during analysis: {str(e)}"
-            }
+        # Run local YOLO inference without blocking the event loop
+        vision_result = await asyncio.to_thread(
+            yolo_vision_service.detect_damage, photo_urls
+        )
 
     def _build_messages(self, image_blocks, vehicle_info, incident_info, vision_result):
         content = [block for block in image_blocks if block is not None]
@@ -108,8 +96,10 @@ class ClaudeAIService:
             HumanMessage(content=content)
         ]
 
-            asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls),
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
         )
+        content.append({"type": "text", "text": text_prompt})
 
         try:
             messages = self._build_messages(
@@ -138,9 +128,21 @@ You must return the result EXACTLY as a valid JSON object matching this schema:
 }
 Do not include any other text before or after the JSON."""
 
-    def _parse_json_response(self, response_text: str | list) -> dict:
-        if isinstance(response_text, list):
-            response_text = response_text[0].get("text", "")
+        try:
+            messages = [
+                SystemMessage(content=system_prompt),
+                HumanMessage(content=content),
+            ]
+            response = await self.client.ainvoke(messages)
+
+            response_text = response.content
+            if isinstance(response_text, list):
+                response_text = response_text[0].get("text", "")
+
+            if "```json" in response_text:
+                json_str = response_text.split("```json")[1].split("```")[0].strip()
+            else:
+                json_str = response_text.strip()
 
         if "```json" in response_text:
             json_str = response_text.split("```json")[1].split("```")[0].strip()

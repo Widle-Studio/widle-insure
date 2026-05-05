@@ -93,11 +93,8 @@ async def get_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     return claim
 
 
-@router.get("/lookup/{claim_number}", response_model=ClaimPublicStatusResponse)
-@limiter.limit("10/minute")
-async def lookup_claim(
-    request: Request, claim_number: str, db: AsyncSession = Depends(get_db)
-) -> Any:
+@router.get("/lookup/{claim_number}", response_model=ClaimResponse)
+async def lookup_claim(claim_number: str, db: AsyncSession = Depends(get_db)) -> Any:
     """
     Lookup a claim by claim_number without API key (public).
     Returns a restricted schema to avoid leaking PII.
@@ -172,9 +169,7 @@ async def upload_claim_photo(
     return new_photo
 
 
-@router.post(
-    "/{claim_id}/analyze", dependencies=[Depends(get_api_key)]
-)
+@router.post("/{claim_id}/analyze", dependencies=[Depends(get_api_key)])
 async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     """Trigger AI analysis on claim photos"""
     # Fetch claim with eager loading of photos to avoid redundant database calls
