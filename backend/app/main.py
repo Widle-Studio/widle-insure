@@ -78,6 +78,10 @@ async def root():
     """Root endpoint providing a welcome message."""
     return {"message": "Welcome to Widle Insure API"}
 
+from app.api.v1.endpoints import payments
+from app.api.v1.endpoints.admin import auth as admin_auth
+from app.api.v1.endpoints.admin import claims as admin_claims
+from app.api.v1.endpoints.health import router as health_router
 
 app.include_router(health_router, tags=["health"])
 app.include_router(
