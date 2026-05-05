@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from fastapi.testclient import TestClient
 
 # Set environment variable before importing app to configure CORS for tests
 os.environ["BACKEND_CORS_ORIGINS"] = '["http://localhost:3000"]'
@@ -20,6 +21,8 @@ from fastapi.testclient import TestClient
 
 def test_cors_preflight():
     from importlib import reload
+
+    from fastapi.testclient import TestClient
 
     import app.core.config
 
@@ -45,6 +48,8 @@ def test_cors_preflight():
 
 def test_cors_rejected_origin():
     from importlib import reload
+
+    from fastapi.testclient import TestClient
 
     import app.core.config
 

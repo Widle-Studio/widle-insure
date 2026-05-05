@@ -217,7 +217,7 @@ async def create_demo_data():
 
                 photo = ClaimPhoto(
                     claim_id=claim.id,
-                    photo_url=f"/static/demo/damage_{random.randint(1,5)}.jpg",
+                    photo_url=f"/static/demo/damage_{random.randint(1, 5)}.jpg",
                     photo_type="damage",
                     ai_analysis=ai_analysis,
                 )

@@ -1,10 +1,11 @@
 """initial_migration_postgresql
 
 Revision ID: 5d7a4f38d9b8
-Revises: 
+Revises:
 Create Date: 2026-03-19 09:16:21.598093
 
 """
+
 from typing import Sequence, Union
 
 import sqlalchemy as sa

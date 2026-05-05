@@ -1,14 +1,15 @@
 """
 Unit tests for the adjudication service.
 """
+
 # pylint: disable=wrong-import-position,import-error,missing-function-docstring
-import os
-import sys
-import unittest
+import os  # noqa: E402
+import sys  # noqa: E402
+import unittest  # noqa: E402
 
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from app.services.adjudication_service import AdjudicationService
+from app.services.adjudication_service import AdjudicationService  # noqa: E402
 
 
 class TestAdjudicationService(unittest.TestCase):

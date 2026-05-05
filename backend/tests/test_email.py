@@ -25,11 +25,19 @@ async def test_send_email_success():
         service = EmailService()
         assert service.enabled is True
 
-        mock_resend.Emails.send.return_value = {"id": "test_id"}
+        mock_to_thread.return_value = {"id": "test_id"}
 
         await service.send_email("recipient@example.com", "Test Subject", "Test Body")
 
-        mock_resend.Emails.send.assert_called_once()
+        mock_to_thread.assert_called_once_with(
+            mock_resend.Emails.send,
+            {
+                "from": "test@example.com",
+                "to": ["recipient@example.com"],
+                "subject": "Test Subject",
+                "html": "Test Body"
+            }
+        )
         mock_logger.info.assert_any_call("Email successfully sent. ID: test_id")
 
 
@@ -49,12 +57,20 @@ async def test_send_email_failure():
         service = EmailService()
         assert service.enabled is True
 
-        # Simulate Resend API failure
-        mock_resend.Emails.send.side_effect = Exception("Resend API Error")
+        # Simulate Resend API failure via to_thread
+        mock_to_thread.side_effect = Exception("Resend API Error")
 
         await service.send_email("recipient@example.com", "Test Subject", "Test Body")
 
-        mock_resend.Emails.send.assert_called_once()
+        mock_to_thread.assert_called_once_with(
+            mock_resend.Emails.send,
+            {
+                "from": "test_value",
+                "to": ["recipient@example.com"],
+                "subject": "Test Subject",
+                "html": "Test Body"
+            }
+        )
         mock_logger.error.assert_called_once_with(
             "Failed to send email to recipient@example.com via Resend. Error: Resend API Error"
         )

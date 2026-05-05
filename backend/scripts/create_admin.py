@@ -1,4 +1,5 @@
 """Create initial admin user from environment variables"""
+
 import asyncio
 import os
 import sys
@@ -20,7 +21,7 @@ async def create_admin():
 
     async with AsyncSessionLocal() as db:
         # Check if admin exists
-        result = await db.execute(select(User).filter(User.email == email))
+        result = await db.execute(select(AdminUser).filter(AdminUser.email == email))
         existing = result.scalar_one_or_none()
 
         if existing:
