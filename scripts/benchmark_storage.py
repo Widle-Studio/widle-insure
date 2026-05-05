@@ -1,16 +1,16 @@
 """Storage benchmarking script."""
-import asyncio
-import time
-import os
-from io import BytesIO
-import sys
+import asyncio  # noqa: E402
+import time  # noqa: E402
+import os  # noqa: E402
+from io import BytesIO  # noqa: E402
+import sys  # noqa: E402
 
 # Add backend to path so we can import app
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'backend')))
 
 # pylint: disable=wrong-import-position,import-error
-from fastapi import UploadFile
-from app.services.storage import StorageService
+from fastapi import UploadFile  # noqa: E402
+from app.services.storage import StorageService  # noqa: E402
 
 async def simulate_heartbeat():
     """A task that should run every 10ms. We measure how much it gets delayed."""

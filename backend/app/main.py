@@ -17,6 +17,7 @@ from app.api.v1.endpoints.admin import claims as admin_claims
 from app.api.v1.endpoints.health import router as health_router
 from app.core.config import settings
 from app.core.log_config import setup_logging
+from app.core.rate_limit import limiter
 
 # Configure logging on startup
 setup_logging()
@@ -37,8 +38,6 @@ if settings.SENTRY_DSN:
 logger = logging.getLogger(__name__)
 
 # Configure Rate Limiter
-limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
-
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
@@ -55,6 +54,9 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["Content-Type", "Authorization", "Accept", "x-api-key"],
 )
+
+
+from fastapi import Request
 
 
 @app.middleware("http")

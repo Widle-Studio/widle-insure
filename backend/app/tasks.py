@@ -58,7 +58,7 @@ async def process_claim_analysis_async(claim_id: str):
         )
         await db.execute(stmt_update)
 
-        # Mock Policy and Fraud Score
+        # Mock Policy
         mock_policy = {
             "status": "Active",
             "coverage_limit": 50000.0,
@@ -99,6 +99,20 @@ async def process_claim_analysis_async(claim_id: str):
                 subject="Claim Under Review",
                 body=email_body,
             )
+
+        # Append SOC2 Audit Log for auto-adjudication decision
+        audit_log = ClaimAuditLog(
+            claim_id=claim_with_photos.id,
+            action="auto_adjudication",
+            performed_by="system",
+            details={
+                "result_status": new_status,
+                "reason": adjudication_result.get("reason", ""),
+                "fraud_score": fraud_analysis["risk_score"],
+                "ml_method": fraud_analysis["method"]
+            }
+        )
+        db.add(audit_log)
 
         await db.commit()
 

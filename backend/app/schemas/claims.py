@@ -60,3 +60,15 @@ class ClaimResponse(ClaimBase):
     photos: List[ClaimPhotoResponse] = []
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ClaimPublicStatusResponse(BaseModel):
+    claim_number: str
+    status: str
+    vehicle_year: Optional[int] = None
+    vehicle_make: Optional[str] = None
+    vehicle_model: Optional[str] = None
+    created_at: datetime
+    approved_amount: Optional[float] = None
+
+    model_config = ConfigDict(from_attributes=True)

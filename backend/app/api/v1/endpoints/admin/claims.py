@@ -9,7 +9,7 @@ from sqlalchemy.orm import selectinload
 
 from app.core.database import get_db
 from app.core.security import get_current_admin_user
-from app.models.claims import Claim
+from app.models.claims import Claim, ClaimAuditLog
 from app.schemas.claims import ClaimResponse
 
 router = APIRouter()
@@ -72,6 +72,15 @@ async def update_claim_status(
         raise HTTPException(status_code=404, detail="Claim not found")
 
     claim.status = status
+
+    audit_log = ClaimAuditLog(
+        claim_id=claim.id,
+        action="update_status",
+        performed_by=current_admin.email,
+        details={"new_status": status}
+    )
+    db.add(audit_log)
+
     await db.commit()
     await db.refresh(claim)
     return claim
@@ -94,6 +103,15 @@ async def approve_claim(
         raise HTTPException(status_code=404, detail="Claim not found")
 
     claim.status = "Approved"
+
+    audit_log = ClaimAuditLog(
+        claim_id=claim.id,
+        action="approve",
+        performed_by=current_admin.email,
+        details={"reason": "Manual Admin Approval"}
+    )
+    db.add(audit_log)
+
     await db.commit()
     await db.refresh(claim)
     return claim
@@ -116,6 +134,15 @@ async def reject_claim(
         raise HTTPException(status_code=404, detail="Claim not found")
 
     claim.status = "Rejected"
+
+    audit_log = ClaimAuditLog(
+        claim_id=claim.id,
+        action="reject",
+        performed_by=current_admin.email,
+        details={"reason": "Manual Admin Rejection"}
+    )
+    db.add(audit_log)
+
     await db.commit()
     await db.refresh(claim)
     return claim

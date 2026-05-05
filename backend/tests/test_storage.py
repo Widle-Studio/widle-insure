@@ -112,7 +112,7 @@ async def test_upload_file_exceeds_size_limit(
 
     # Execute and Assert Exception
     service = StorageService()
-    expected_file_path = os.path.join(UPLOAD_DIR, "1234-5678.jpg")
+    os.path.join(UPLOAD_DIR, "1234-5678.jpg")
 
     with pytest.raises(HTTPException) as exc_info:
         with patch("app.services.storage.shutil.copyfileobj"):
