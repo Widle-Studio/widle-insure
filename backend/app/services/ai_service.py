@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 def sanitize_input(text: str) -> str:
     """Sanitize user input to prevent prompt injection."""
-    return re.sub(r'<[^>]*>', '', str(text))
+    return re.sub(r"<[^>]*>", "", str(text))
 
 
 class ClaudeAIService:
@@ -58,10 +58,7 @@ class ClaudeAIService:
             return None
 
     async def assess_damage(
-        self,
-        photo_urls: list[str],
-        vehicle_info: dict,
-        incident_info: dict
+        self, photo_urls: list[str], vehicle_info: dict, incident_info: dict
     ) -> dict:
         if not self.client:
             logger.warning("Anthropic API key not configured. Returning mock data.")
@@ -71,7 +68,7 @@ class ClaudeAIService:
                 "estimated_cost": 2500.00,
                 "confidence": 0.85,
                 "fraud_indicators": [],
-                "reasoning": "Mock analysis - implement Claude API"
+                "reasoning": "Mock analysis - implement Claude API",
             }
 
         # Concurrently encode images
@@ -173,13 +170,13 @@ but ultimately rely on your own visual assessment of the photos provided.
 
         return f"""Here is the context for the claim:
 <vehicle_context>
-<make>{sanitize_input(vehicle_info.get('make', ''))}</make>
-<model>{sanitize_input(vehicle_info.get('model', ''))}</model>
-<year>{sanitize_input(vehicle_info.get('year', ''))}</year>
+<make>{sanitize_input(vehicle_info.get("make", ""))}</make>
+<model>{sanitize_input(vehicle_info.get("model", ""))}</model>
+<year>{sanitize_input(vehicle_info.get("year", ""))}</year>
 </vehicle_context>
 <incident_context>
-<date>{sanitize_input(incident_info.get('date', ''))}</date>
-<description>{sanitize_input(incident_info.get('description', ''))}</description>
+<date>{sanitize_input(incident_info.get("date", ""))}</date>
+<description>{sanitize_input(incident_info.get("description", ""))}</description>
 </incident_context>
 {vision_context}
 Be conservative in your estimates. If unsure, flag for human review.

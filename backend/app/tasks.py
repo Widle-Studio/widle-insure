@@ -45,16 +45,27 @@ async def process_claim_analysis_async(claim_id: str):
         for photo in claim_with_photos.photos:
             photo.ai_analysis = analysis
 
-        # Mock Policy and Fraud Score
+        # Mock Policy
         mock_policy = {
             "status": "Active",
             "coverage_limit": 50000.0,
             "deductible": 500.0
         }
 
-        mock_fraud_score = 0
-        if claim_with_photos.estimated_damage_cost and float(claim_with_photos.estimated_damage_cost) > 10000:
-            mock_fraud_score += 15
+        # Calculate days since incident
+        days_since_incident = 0
+        if claim_with_photos.incident_date:
+            days_since_incident = (datetime.utcnow() - claim_with_photos.incident_date).days
+
+        # Use Advanced ML Fraud Detection
+        fraud_analysis = fraud_detection_service.analyze_fraud_risk(
+            estimated_cost=float(claim_with_photos.estimated_damage_cost or 0.0),
+            days_since_incident=days_since_incident,
+            claim_history_count=0 # Mocking 0 previous claims for this user
+        )
+
+        # Merge ML results into analysis
+        analysis["ml_fraud_flags"] = "Anomaly detected by ML model." if fraud_analysis["is_anomaly"] else "No anomalies."
 
         # Trigger Auto-Adjudication
         claim_dict = {"estimated_damage_cost": claim_with_photos.estimated_damage_cost}
@@ -62,7 +73,7 @@ async def process_claim_analysis_async(claim_id: str):
             claim=claim_dict,
             policy=mock_policy,
             ai_analysis=analysis,
-            fraud_score=mock_fraud_score
+            fraud_score=fraud_analysis["risk_score"]
         )
 
         new_status = adjudication_result["status"]
@@ -83,6 +94,20 @@ async def process_claim_analysis_async(claim_id: str):
                 subject="Claim Under Review",
                 body=email_body
             )
+
+        # Append SOC2 Audit Log for auto-adjudication decision
+        audit_log = ClaimAuditLog(
+            claim_id=claim_with_photos.id,
+            action="auto_adjudication",
+            performed_by="system",
+            details={
+                "result_status": new_status,
+                "reason": adjudication_result.get("reason", ""),
+                "fraud_score": fraud_analysis["risk_score"],
+                "ml_method": fraud_analysis["method"]
+            }
+        )
+        db.add(audit_log)
 
         await db.commit()
 
