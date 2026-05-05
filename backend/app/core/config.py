@@ -7,12 +7,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Widle Insure API"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str # No default value, required from environment
-    API_KEY: str # No default value, required from environment
+    SECRET_KEY: str  # No default value, required from environment
+    API_KEY: str  # No default value, required from environment
     FIRST_ADMIN_EMAIL: str = "admin@widle.com"
     FIRST_ADMIN_PASSWORD: Optional[str] = None
     ANTHROPIC_API_KEY: Optional[str] = None
-    
+
     # CORS Origins (default empty list, allowing strict configuration)
     BACKEND_CORS_ORIGINS: Union[str, List[str]] = []
 
@@ -33,6 +33,7 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             if v.startswith("[") and v.endswith("]"):
                 import json
+
                 try:
                     return json.loads(v)
                 except json.JSONDecodeError:
@@ -55,5 +56,6 @@ class Settings(BaseSettings):
         return "sqlite+aiosqlite:///./sql_app.db"
 
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+
 
 settings = Settings()

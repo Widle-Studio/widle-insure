@@ -1,5 +1,7 @@
-import pytest
 from datetime import datetime, timezone
+
+import pytest
+
 
 class SharedMockScalars:
     def __init__(self, result):
@@ -10,12 +12,14 @@ class SharedMockScalars:
             return self.result()
         return self.result
 
+
 class SharedMockResult:
     def __init__(self, result):
         self.result = result
 
     def scalars(self):
         return SharedMockScalars(self.result)
+
 
 class SharedMockDbSession:
     def __init__(self, execute_result=None):
@@ -46,11 +50,14 @@ class SharedMockDbSession:
                 if not hasattr(item, "photos"):
                     item.photos = []
             return item
+
         return SharedMockResult(get_last_added)
+
 
 @pytest.fixture
 def mock_db_session():
     return SharedMockDbSession
+
 
 @pytest.fixture
 def mock_claim_class():
@@ -59,9 +66,13 @@ def mock_claim_class():
             self.id = claim_id
             self.policy_number = payload.get("policy_number", "POL-123456789")
             incident_date = payload.get("incident_date", "2024-01-01T12:00:00")
-            self.incident_date = datetime.fromisoformat(incident_date).replace(tzinfo=timezone.utc)
+            self.incident_date = datetime.fromisoformat(incident_date).replace(
+                tzinfo=timezone.utc
+            )
             self.incident_location = payload.get("incident_location", "New York, NY")
-            self.incident_description = payload.get("incident_description", "Fender bender at intersection")
+            self.incident_description = payload.get(
+                "incident_description", "Fender bender at intersection"
+            )
             self.vehicle_vin = payload.get("vehicle_vin", "1HGCM82633A004123")
             self.vehicle_make = payload.get("vehicle_make", "Honda")
             self.vehicle_model = payload.get("vehicle_model", "Accord")
@@ -74,4 +85,5 @@ def mock_claim_class():
             self.created_at = datetime.now(timezone.utc)
             self.updated_at = datetime.now(timezone.utc)
             self.photos = []
+
     return SharedMockClaim
