@@ -48,5 +48,4 @@ class EmailService:
             print(f"Body: {body}")
             print("------------------")
 
-
 email_service = EmailService()

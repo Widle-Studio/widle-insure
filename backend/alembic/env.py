@@ -7,12 +7,12 @@ from sqlalchemy import pool  # noqa: E402
 from sqlalchemy.engine import Connection  # noqa: E402
 from sqlalchemy.ext.asyncio import async_engine_from_config  # noqa: E402
 
-from alembic import context  # noqa: E402
+from alembic import context
+from app.core.database import Base
 
 # Add backend directory to path so we can import app modules
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from app.core.database import Base  # noqa: E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -24,7 +24,6 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Overwrite sqlalchemy.url with the one from settings
-import os
 
 database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./sql_app.db")
 config.set_main_option("sqlalchemy.url", database_url)
