@@ -64,12 +64,11 @@ async def initiate_payout(
                     destination=mock_destination,
                     description=f"Insurance claim payout: {claim.claim_number}",
                 )
-                _transfer_id = transfer.id
             else:
                 raise ValueError("Approved amount must be greater than zero.")
         else:
             logger.info("STRIPE_SECRET_KEY not set. Mocking Stripe payout transfer.")
-            _transfer_id = f"tr_{secrets.token_hex(12)}"
+            f"tr_{secrets.token_hex(12)}"
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error during payout for claim {claim_id}: {str(e)}")

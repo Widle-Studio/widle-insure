@@ -11,7 +11,7 @@ def test_setup_logging_configures_basic_config():
     the expected format and handlers.
     """
     with patch("app.core.log_config.logging.basicConfig") as mock_basic_config, \
-         patch("app.core.log_config.logging.getLogger") as _mock_get_logger:
+         patch("app.core.log_config.logging.getLogger"):
 
         setup_logging()
 

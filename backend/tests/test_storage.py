@@ -49,15 +49,7 @@ async def test_upload_file(mock_exists, mock_makedirs, mock_uuid4, mock_aiofiles
     mock_file = MagicMock(spec=UploadFile)
     mock_file.filename = "test_image.jpg"
     mock_file.size = 100
-
-    # Mocking async read
-    async def mock_read(size):
-        if not hasattr(mock_read, "called"):
-            mock_read.called = True
-            return b"dummy content"
-        return b""
-
-    mock_file.read = mock_read
+    mock_file.file = MagicMock()
 
     # Mocking aiofiles open
     mock_file_obj = AsyncMock()
@@ -74,8 +66,6 @@ async def test_upload_file(mock_exists, mock_makedirs, mock_uuid4, mock_aiofiles
 
     # Assert copyfileobj was called
     mock_copy.assert_called_once()
-
-
 
 @pytest.mark.asyncio
 @patch("app.services.storage.aiofiles.open")
