@@ -23,6 +23,9 @@ from app.schemas.claims import (
     ClaimResponse,
 )
 from app.services.storage import storage_service
+from app.services.ai_service import ai_service
+from app.services.adjudication_service import adjudication_service
+from app.services.email import email_service
 from app.tasks import analyze_claim_task
 
 router = APIRouter()
@@ -182,6 +185,9 @@ async def analyze_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db))
 
     if not claim_with_photos.photos:
         raise HTTPException(400, "No photos to analyze")
+
+    # Get photo URLs
+    photo_urls = [photo.photo_url for photo in claim_with_photos.photos]
 
     # Update status to processing
     claim_with_photos.status = "Processing"

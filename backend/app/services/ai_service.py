@@ -8,7 +8,6 @@ import re
 import aiofiles
 from langchain_anthropic import ChatAnthropic
 from langchain_core.messages import HumanMessage, SystemMessage
-
 from app.core.config import settings
 from app.services.vision_service import yolo_vision_service
 
@@ -22,16 +21,12 @@ def sanitize_input(text: str) -> str:
 
 class ClaudeAIService:
     def __init__(self):
-        api_key = getattr(settings, "ANTHROPIC_API_KEY", None)
-        self.client = (
-            ChatAnthropic(
-                model_name="claude-3-5-sonnet-20241022",
-                anthropic_api_key=api_key,
-                max_tokens=1024,
-            )
-            if api_key
-            else None
-        )
+        api_key = getattr(settings, 'ANTHROPIC_API_KEY', None)
+        self.client = ChatAnthropic(
+            model_name="claude-3-5-sonnet-20241022",
+            anthropic_api_key=api_key,
+            max_tokens=1024
+        ) if api_key else None
 
     async def _encode_image(self, photo_path: str) -> dict | None:
         """Read a local image file and encode it as base64 for Anthropic API."""
@@ -53,7 +48,9 @@ class ClaudeAIService:
 
             return {
                 "type": "image_url",
-                "image_url": {"url": f"data:{media_type};base64,{base64_image}"},
+                "image_url": {
+                    "url": f"data:{media_type};base64,{base64_image}"
+                }
             }
         except Exception as e:
             logger.error(f"Error encoding image {photo_path}: {e}")
@@ -73,33 +70,23 @@ class ClaudeAIService:
                 "reasoning": "Mock analysis - implement Claude API",
             }
 
-        # Concurrently encode images and run YOLO inference
+        # Concurrently encode images
         encode_tasks = [self._encode_image(url) for url in photo_urls]
-        image_blocks, vision_result = await asyncio.gather(
-            asyncio.gather(*encode_tasks),
-            asyncio.to_thread(yolo_vision_service.detect_damage, photo_urls)
-        )
+        image_blocks = await asyncio.gather(*encode_tasks)
 
-        # Run local YOLO inference without blocking the event loop
-        vision_result = await asyncio.to_thread(
-            yolo_vision_service.detect_damage, photo_urls
-        )
+        # Run local YOLO inference
+        vision_result = yolo_vision_service.detect_damage(photo_urls)
 
-    def _build_messages(self, image_blocks, vehicle_info, incident_info, vision_result):
-        content = [block for block in image_blocks if block is not None]
-        text_prompt = self._build_damage_assessment_prompt(
-            vehicle_info, incident_info, vision_result
-        )
-        content.append({"type": "text", "text": text_prompt})
-        return [
-            SystemMessage(content=self._get_system_prompt()),
-            HumanMessage(content=content)
-        ]
+        content = []
+        for image_block in image_blocks:
+            if image_block:
+                content.append(image_block)
 
-        text_prompt = self._build_damage_assessment_prompt(
-            vehicle_info, incident_info, vision_result
-        )
-        content.append({"type": "text", "text": text_prompt})
+        text_prompt = self._build_damage_assessment_prompt(vehicle_info, incident_info, vision_result)
+        content.append({
+            "type": "text",
+            "text": text_prompt
+        })
 
         try:
             messages = self._build_messages(
@@ -131,7 +118,7 @@ Do not include any other text before or after the JSON."""
         try:
             messages = [
                 SystemMessage(content=system_prompt),
-                HumanMessage(content=content),
+                HumanMessage(content=content)
             ]
             response = await self.client.ainvoke(messages)
 
@@ -162,25 +149,16 @@ Do not include any other text before or after the JSON."""
                 "reasoning": f"Error occurred during analysis: {str(e)}",
             }
 
-    def _build_damage_assessment_prompt(
-        self, vehicle_info, incident_info, vision_result
-    ):
+    def _build_damage_assessment_prompt(self, vehicle_info, incident_info, vision_result):
         vision_context = ""
         if vision_result.get("status") == "success" and vision_result.get("detections"):
-            highest_sev = sanitize_input(
-                vision_result.get('highest_severity', 'unknown')
-            )
-            parts = ', '.join(
-                [sanitize_input(p) for p in vision_result.get('damaged_parts', [])]
-            )
             vision_context = f"""
 <computer_vision_analysis>
 The initial automated computer vision system (YOLOv8) detected the following:
-- Highest Severity Detected: {sanitize_input(vision_result.get("highest_severity", "unknown"))}
-- Damaged Parts Detected: {", ".join([sanitize_input(p) for p in vision_result.get("damaged_parts", [])])}
+- Highest Severity Detected: {sanitize_input(vision_result.get('highest_severity', 'unknown'))}
+- Damaged Parts Detected: {', '.join([sanitize_input(p) for p in vision_result.get('damaged_parts', [])])}
 </computer_vision_analysis>
-Use this computer vision data to inform your cost estimation and final adjudication,
-but ultimately rely on your own visual assessment of the photos provided.
+Use this computer vision data to inform your cost estimation and final adjudication, but ultimately rely on your own visual assessment of the photos provided.
 """
 
         return f"""Here is the context for the claim:
@@ -196,6 +174,5 @@ but ultimately rely on your own visual assessment of the photos provided.
 {vision_context}
 Be conservative in your estimates. If unsure, flag for human review.
 """
-
 
 ai_service = ClaudeAIService()

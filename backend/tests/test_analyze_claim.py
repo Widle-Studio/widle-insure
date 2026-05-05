@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
+from unittest.mock import patch, MagicMock, AsyncMock
 
 from app.core.config import settings
 from app.core.database import get_db

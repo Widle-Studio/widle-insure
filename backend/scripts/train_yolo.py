@@ -1,7 +1,5 @@
 import os
-
 from ultralytics import YOLO
-
 
 def train_model():
     """
@@ -30,12 +28,11 @@ def train_model():
         batch=2,
         project=os.path.join(base_dir, "runs"),
         name="damage_assessment",
-        device="cpu",  # Force CPU for local execution where GPU isn't guaranteed
+        device="cpu" # Force CPU for local execution where GPU isn't guaranteed
     )
 
     print("Training complete!")
     print(f"Best model weights saved to: {results.save_dir}/weights/best.pt")
-
 
 if __name__ == "__main__":
     train_model()
