@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 def sanitize_input(text: str) -> str:
     """Sanitize user input to prevent prompt injection."""
-    return re.sub(r'<[^>]*>', '', str(text))
+    return re.sub(r"<[^>]*>", "", str(text))
 
 
 class ClaudeAIService:
@@ -57,10 +57,7 @@ class ClaudeAIService:
             return None
 
     async def assess_damage(
-        self,
-        photo_urls: list[str],
-        vehicle_info: dict,
-        incident_info: dict
+        self, photo_urls: list[str], vehicle_info: dict, incident_info: dict
     ) -> dict:
         if not self.client:
             logger.warning("Anthropic API key not configured. Returning mock data.")
@@ -70,7 +67,7 @@ class ClaudeAIService:
                 "estimated_cost": 2500.00,
                 "confidence": 0.85,
                 "fraud_indicators": [],
-                "reasoning": "Mock analysis - implement Claude API"
+                "reasoning": "Mock analysis - implement Claude API",
             }
 
         # Concurrently encode images
@@ -91,7 +88,21 @@ class ClaudeAIService:
             "text": text_prompt
         })
 
-        system_prompt = """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
+        try:
+            messages = self._build_messages(
+                image_blocks, vehicle_info, incident_info, vision_result
+            )
+            response = await self.client.ainvoke(messages)
+            return self._parse_json_response(response.content)
+
+        text_prompt = self._build_damage_assessment_prompt(
+            vehicle_info, incident_info, vision_result
+        )
+        content.append({"type": "text", "text": text_prompt})
+        
+    def _get_system_prompt(self) -> str:
+        return """You are an auto insurance claims adjuster.
+Analyze the vehicle damage photo provided.
 Provide your analysis based on the photo and the provided context.
 You must return the result EXACTLY as a valid JSON object matching this schema:
 {
@@ -120,9 +131,13 @@ Do not include any other text before or after the JSON."""
             else:
                 json_str = response_text.strip()
 
-            result = json.loads(json_str)
-            return result
+        if "```json" in response_text:
+            json_str = response_text.split("```json")[1].split("```")[0].strip()
+        else:
+            json_str = response_text.strip()
 
+        try:
+            return json.loads(json_str)
         except Exception as e:
             logger.error(f"Error calling Claude API: {e}")
             return {
@@ -131,7 +146,7 @@ Do not include any other text before or after the JSON."""
                 "estimated_cost": 2500.00,
                 "confidence": 0.85,
                 "fraud_indicators": [],
-                "reasoning": f"Error occurred during analysis: {str(e)}"
+                "reasoning": f"Error occurred during analysis: {str(e)}",
             }
 
     def _build_damage_assessment_prompt(self, vehicle_info, incident_info, vision_result):
@@ -148,13 +163,13 @@ Use this computer vision data to inform your cost estimation and final adjudicat
 
         return f"""Here is the context for the claim:
 <vehicle_context>
-<make>{sanitize_input(vehicle_info.get('make', ''))}</make>
-<model>{sanitize_input(vehicle_info.get('model', ''))}</model>
-<year>{sanitize_input(vehicle_info.get('year', ''))}</year>
+<make>{sanitize_input(vehicle_info.get("make", ""))}</make>
+<model>{sanitize_input(vehicle_info.get("model", ""))}</model>
+<year>{sanitize_input(vehicle_info.get("year", ""))}</year>
 </vehicle_context>
 <incident_context>
-<date>{sanitize_input(incident_info.get('date', ''))}</date>
-<description>{sanitize_input(incident_info.get('description', ''))}</description>
+<date>{sanitize_input(incident_info.get("date", ""))}</date>
+<description>{sanitize_input(incident_info.get("description", ""))}</description>
 </incident_context>
 {vision_context}
 Be conservative in your estimates. If unsure, flag for human review.

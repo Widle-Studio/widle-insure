@@ -38,7 +38,9 @@ class Claim(Base):
     approved_amount = Column(Numeric(10, 2), nullable=True)
     created_at = Column(DateTime, default=func.now())  # pylint: disable=not-callable
     updated_at = Column(
-        DateTime, default=func.now(), onupdate=func.now()  # pylint: disable=not-callable
+        DateTime,
+        default=func.now(),
+        onupdate=func.now(),  # pylint: disable=not-callable
     )
 
     photos = relationship(
@@ -48,11 +50,14 @@ class Claim(Base):
         "ClaimAuditLog", back_populates="claim", cascade="all, delete-orphan"
     )
 
+
 class ClaimPhoto(Base):
     __tablename__ = "claim_photos"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    claim_id = Column(Uuid(as_uuid=True), ForeignKey("claims.id"), nullable=False, index=True)
+    claim_id = Column(
+        Uuid(as_uuid=True), ForeignKey("claims.id"), nullable=False, index=True
+    )
     photo_url = Column(String, nullable=False)
     photo_type = Column(String, nullable=True)
     ai_analysis = Column(JSON, nullable=True)
@@ -65,7 +70,9 @@ class ClaimAuditLog(Base):
     __tablename__ = "claim_audit_log"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    claim_id = Column(Uuid(as_uuid=True), ForeignKey("claims.id"), nullable=False, index=True)
+    claim_id = Column(
+        Uuid(as_uuid=True), ForeignKey("claims.id"), nullable=False, index=True
+    )
     action = Column(String, nullable=False)
     performed_by = Column(String, nullable=True)
     details = Column(JSON, nullable=True)

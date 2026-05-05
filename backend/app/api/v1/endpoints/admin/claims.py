@@ -46,9 +46,7 @@ async def get_claim(
     Get claim details (admin).
     """
     result = await db.execute(
-        select(Claim)
-        .where(Claim.id == claim_id)
-        .options(selectinload(Claim.photos))
+        select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
     )
     claim = result.scalars().first()
     if not claim:
@@ -67,9 +65,7 @@ async def update_claim_status(
     Update claim status.
     """
     result = await db.execute(
-        select(Claim)
-        .where(Claim.id == claim_id)
-        .options(selectinload(Claim.photos))
+        select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
     )
     claim = result.scalars().first()
     if not claim:
@@ -100,9 +96,7 @@ async def approve_claim(
     Approve a claim.
     """
     result = await db.execute(
-        select(Claim)
-        .where(Claim.id == claim_id)
-        .options(selectinload(Claim.photos))
+        select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
     )
     claim = result.scalars().first()
     if not claim:
@@ -133,9 +127,7 @@ async def reject_claim(
     Reject a claim.
     """
     result = await db.execute(
-        select(Claim)
-        .where(Claim.id == claim_id)
-        .options(selectinload(Claim.photos))
+        select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
     )
     claim = result.scalars().first()
     if not claim:

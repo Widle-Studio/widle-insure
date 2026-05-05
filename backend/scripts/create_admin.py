@@ -1,8 +1,9 @@
 """Create initial admin user from environment variables"""
+
 import asyncio
 import os
 import sys
-from sqlalchemy.ext.asyncio import AsyncSession
+
 from sqlalchemy import select
 
 # Add backend to path
@@ -11,6 +12,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 from app.core.database import AsyncSessionLocal
 from app.models.users import AdminUser
 from app.core.security import get_password_hash
+from app.models.users import User
+
 
 async def create_admin():
     """Create admin user if doesn't exist"""
@@ -35,6 +38,7 @@ async def create_admin():
         db.add(admin)
         await db.commit()
         print(f"✅ Created admin user: {email}")
+
 
 if __name__ == "__main__":
     asyncio.run(create_admin())

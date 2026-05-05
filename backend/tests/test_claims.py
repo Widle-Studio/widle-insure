@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from unittest.mock import patch
 
 import pytest
@@ -52,6 +51,7 @@ async def test_create_claim_invalid_email(valid_claim_payload: dict):
     assert response.status_code == 422
     data = response.json()
     assert data["detail"][0]["loc"] == ["body", "claimant_email"]
+
 
 @pytest.mark.asyncio
 async def test_create_claim_missing_required_fields(valid_claim_payload: dict):
@@ -108,7 +108,9 @@ async def test_create_claim_success(valid_claim_payload: dict, mock_db_session):
 
 
 @pytest.mark.asyncio
-async def test_create_claim_secure_randomness(valid_claim_payload: dict, mock_db_session):
+async def test_create_claim_secure_randomness(
+    valid_claim_payload: dict, mock_db_session
+):
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
@@ -126,7 +128,9 @@ async def test_create_claim_secure_randomness(valid_claim_payload: dict, mock_db
         with patch(
             "app.api.v1.endpoints.claims.secrets.randbelow", return_value=123456
         ) as mock_randbelow:
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
+            async with AsyncClient(
+                transport=transport, base_url="http://test"
+            ) as client:
                 response = await client.post(
                     f"{settings.API_V1_STR}/claims/",
                     json=valid_claim_payload,
@@ -166,7 +170,9 @@ async def test_upload_claim_photo_invalid_content_type():
 
 
 @pytest.mark.asyncio
-async def test_get_claim_success(valid_claim_payload: dict, mock_db_session, mock_claim_class):
+async def test_get_claim_success(
+    valid_claim_payload: dict, mock_db_session, mock_claim_class
+):
     from app.core.database import get_db
 
     auth_headers = {"x-api-key": settings.API_KEY}
@@ -222,3 +228,63 @@ async def test_get_claim_not_found(mock_db_session):
 
     assert response.status_code == 404
     assert response.json()["detail"] == "Claim not found"
+
+
+@pytest.mark.asyncio
+async def test_lookup_claim_security(
+    valid_claim_payload: dict, mock_db_session, mock_claim_class
+):
+    """
+    Test that the public lookup endpoint returns the restricted ClaimPublicStatusResponse
+    and does not expose PII like claimant_name or claimant_email. Also verifies rate limiting.
+    """
+    from app.core.database import get_db
+
+    claim_id = "123e4567-e89b-12d3-a456-426614174000"
+    claim_number = "CLM-2024-001234"
+
+    mock_claim = mock_claim_class(claim_id, valid_claim_payload)
+    mock_claim.approved_amount = 1000.50
+    mock_db = mock_db_session(execute_result=mock_claim)
+
+    async def override_get_db():
+        yield mock_db
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Verify response structure and PII absence
+        response = await client.get(
+            f"{settings.API_V1_STR}/claims/lookup/{claim_number}",
+        )
+        assert response.status_code == 200
+        data = response.json()
+
+        # Must include safe fields
+        assert data["claim_number"] == claim_number
+        assert data["status"] == "New"
+        assert data["vehicle_year"] == valid_claim_payload["vehicle_year"]
+        assert data["vehicle_make"] == valid_claim_payload["vehicle_make"]
+        assert data["vehicle_model"] == valid_claim_payload["vehicle_model"]
+        assert data["approved_amount"] == 1000.50
+        assert "created_at" in data
+
+        # Must NOT include PII
+        assert "claimant_name" not in data
+        assert "claimant_email" not in data
+        assert "claimant_phone" not in data
+        assert "incident_location" not in data
+        assert "incident_description" not in data
+
+        # 2. Verify Rate Limiting (limit is 10/minute, we already made 1 request)
+        for _ in range(10):
+            response = await client.get(
+                f"{settings.API_V1_STR}/claims/lookup/{claim_number}"
+            )
+
+        # The 11th request (or 12th total) should hit the rate limit
+        assert response.status_code == 429
+        assert "Rate limit exceeded" in response.text
+
+    app.dependency_overrides.clear()
