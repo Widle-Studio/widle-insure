@@ -48,7 +48,7 @@ async def test_upload_file(mock_exists, mock_makedirs, mock_uuid4, mock_aiofiles
 
     mock_file = MagicMock(spec=UploadFile)
     mock_file.filename = "test_image.jpg"
-    mock_file.size = None
+    mock_file.size = 100
 
     # Mocking async read
     async def mock_read(size):
@@ -92,7 +92,7 @@ async def test_upload_file_exceeds_size_limit(
 
     mock_file = MagicMock(spec=UploadFile)
     mock_file.filename = "test_large_image.jpg"
-    mock_file.size = None
+    mock_file.size = settings.MAX_UPLOAD_SIZE + 1
 
     # Mocking async read to return more than MAX_UPLOAD_SIZE
     async def mock_read(size):
