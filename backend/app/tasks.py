@@ -47,7 +47,11 @@ async def _send_adjudication_email(claim: Claim, new_status: str):
 
 async def process_claim_analysis_async(claim_id: str):
     async with AsyncSessionLocal() as db:
-        stmt = select(Claim).where(Claim.id == claim_id).options(selectinload(Claim.photos))
+        stmt = (
+            select(Claim)
+            .where(Claim.id == claim_id)
+            .options(selectinload(Claim.photos))
+        )
         result = await db.execute(stmt)
         claim_with_photos = result.scalars().first()
 
@@ -67,15 +71,18 @@ async def process_claim_analysis_async(claim_id: str):
             },
             incident_info={
                 "description": claim_with_photos.incident_description,
-                "date": str(claim_with_photos.incident_date) if claim_with_photos.incident_date else "",
-            }
+                "date": str(claim_with_photos.incident_date)
+                if claim_with_photos.incident_date
+                else "",
+            },
         )
 
         claim_with_photos.estimated_damage_cost = analysis.get("estimated_cost")
 
-        # Store AI analysis in photos
-        for photo in claim_with_photos.photos:
-            photo.ai_analysis = analysis
+        # Store AI analysis in photos efficiently
+        # synchronize_session="auto" is used by default, which keeps in-memory objects updated
+        stmt_update = update(ClaimPhoto).where(ClaimPhoto.claim_id == claim_id).values(ai_analysis=analysis)
+        await db.execute(stmt_update)
 
         mock_policy, mock_fraud_score = _get_mock_policy_and_fraud_score(claim_with_photos.estimated_damage_cost)
 
@@ -85,7 +92,7 @@ async def process_claim_analysis_async(claim_id: str):
             claim=claim_dict,
             policy=mock_policy,
             ai_analysis=analysis,
-            fraud_score=mock_fraud_score
+            fraud_score=mock_fraud_score,
         )
 
         new_status = adjudication_result["status"]
@@ -96,6 +103,7 @@ async def process_claim_analysis_async(claim_id: str):
         await _send_adjudication_email(claim_with_photos, new_status)
 
         await db.commit()
+
 
 @celery_app.task(name="app.tasks.ai_analysis_task")
 def analyze_claim_task(claim_id: str):
