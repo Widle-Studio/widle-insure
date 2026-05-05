@@ -1,13 +1,12 @@
 import asyncio
 import logging
 
-from sqlalchemy import update
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.core.celery_app import celery_app
 from app.core.database import AsyncSessionLocal
-from app.models.claims import Claim, ClaimPhoto
+from app.models.claims import Claim
 from app.services.adjudication_service import adjudication_service
 from app.services.ai_service import ai_service
 from app.services.email import email_service

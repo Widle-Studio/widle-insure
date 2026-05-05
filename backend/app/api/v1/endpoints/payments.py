@@ -1,5 +1,4 @@
 import logging
-import secrets
 import uuid
 from typing import Any
 
@@ -68,7 +67,6 @@ async def initiate_payout(
                 raise ValueError("Approved amount must be greater than zero.")
         else:
             logger.info("STRIPE_SECRET_KEY not set. Mocking Stripe payout transfer.")
-            f"tr_{secrets.token_hex(12)}"
 
     except stripe.error.StripeError as e:
         logger.error(f"Stripe error during payout for claim {claim_id}: {str(e)}")

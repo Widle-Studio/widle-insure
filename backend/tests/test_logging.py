@@ -10,10 +10,9 @@ def test_setup_logging_configures_basic_config():
     Test that setup_logging configures basicConfig correctly and sets
     the expected format and handlers.
     """
-    with (
-        patch("app.core.log_config.logging.basicConfig") as mock_basic_config,
-        patch("app.core.log_config.logging.getLogger"),
-    ):
+    with patch("app.core.log_config.logging.basicConfig") as mock_basic_config, \
+         patch("app.core.log_config.logging.getLogger"):
+
         setup_logging()
 
         # Verify basicConfig was called correctly
