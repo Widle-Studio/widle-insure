@@ -66,6 +66,7 @@ async def initiate_payout(
             else:
                 raise ValueError("Approved amount must be greater than zero.")
         else:
+            import secrets
             logger.info("STRIPE_SECRET_KEY not set. Mocking Stripe payout transfer.")
             f"tr_{secrets.token_hex(12)}"
 

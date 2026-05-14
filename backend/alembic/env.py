@@ -13,7 +13,6 @@ from app.core.database import Base
 # Add backend directory to path so we can import app modules
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
-from app.core.database import Base
 from app.models.claims import Claim, ClaimAuditLog, ClaimPhoto  # noqa: F401
 
 # this is the Alembic Config object, which provides
@@ -27,8 +26,6 @@ if config.config_file_name is not None:
 
 
 # Overwrite sqlalchemy.url with the one from settings
-import os
-
 database_url = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./sql_app.db")
 config.set_main_option("sqlalchemy.url", database_url)
 

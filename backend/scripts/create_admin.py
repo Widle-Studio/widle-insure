@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from app.core.database import AsyncSessionLocal
 from app.core.security import get_password_hash
-from app.models.users import User
+from app.models.users import AdminUser, User
 
 
 async def create_admin():
