@@ -85,5 +85,6 @@ def mock_claim_class():
             self.created_at = datetime.now(timezone.utc)
             self.updated_at = datetime.now(timezone.utc)
             self.photos = []
+            self.approved_amount = payload.get("approved_amount", None)
 
     return SharedMockClaim
