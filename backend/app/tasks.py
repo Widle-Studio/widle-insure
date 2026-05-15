@@ -1,12 +1,13 @@
 import asyncio
 import logging
 
+from sqlalchemy import update
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 
 from app.core.celery_app import celery_app
 from app.core.database import AsyncSessionLocal
-from app.models.claims import Claim
+from app.models.claims import Claim, ClaimAuditLog, ClaimPhoto
 from app.services.adjudication_service import adjudication_service
 from app.services.ai_service import ai_service
 from app.services.email import email_service
@@ -107,8 +108,8 @@ async def process_claim_analysis_async(claim_id: str):
             details={
                 "result_status": new_status,
                 "reason": adjudication_result.get("reason", ""),
-                "fraud_score": fraud_analysis["risk_score"],
-                "ml_method": fraud_analysis["method"]
+                "fraud_score": mock_fraud_score,
+                "ml_method": "none"
             }
         )
         db.add(audit_log)

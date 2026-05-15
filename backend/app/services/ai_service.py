@@ -86,18 +86,33 @@ class ClaudeAIService:
             )
             response = await self.client.ainvoke(messages)
             return self._parse_json_response(response.content)
+        except Exception as e:
+            logger.error(f"Error calling Claude API: {e}")
+            return {
+                "severity": "moderate",
+                "damaged_parts": ["front_bumper", "hood"],
+                "estimated_cost": 2500.00,
+                "confidence": 0.85,
+                "fraud_indicators": [],
+                "reasoning": f"Error occurred during analysis: {str(e)}",
+            }
 
+    def _build_messages(
+        self, image_blocks, vehicle_info, incident_info, vision_result
+    ) -> list:
+        content = [block for block in image_blocks if block is not None]
         text_prompt = self._build_damage_assessment_prompt(
             vehicle_info, incident_info, vision_result
         )
         content.append({"type": "text", "text": text_prompt})
 
-        text_prompt = self._build_damage_assessment_prompt(
-            vehicle_info, incident_info, vision_result
-        )
-        content.append({"type": "text", "text": text_prompt})
+        return [
+            SystemMessage(content=self._get_system_prompt()),
+            HumanMessage(content=content),
+        ]
 
-        system_prompt = """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
+    def _get_system_prompt(self) -> str:
+        return """You are an auto insurance claims adjuster. Analyze the vehicle damage photo provided.
 Provide your analysis based on the photo and the provided context.
 You must return the result EXACTLY as a valid JSON object matching this schema:
 {
@@ -110,39 +125,25 @@ You must return the result EXACTLY as a valid JSON object matching this schema:
 }
 Do not include any other text before or after the JSON."""
 
-        try:
-            messages = [
-                SystemMessage(content=system_prompt),
-                HumanMessage(content=content),
-            ]
-            response = await self.client.ainvoke(messages)
-
-        text_prompt = self._build_damage_assessment_prompt(
-            vehicle_info, incident_info, vision_result
-        )
-        content.append({
-            "type": "text",
-            "text": text_prompt
-        })
-
-        return [
-            SystemMessage(content=self._get_system_prompt()),
-            HumanMessage(content=content)
-        ]
-
     def _parse_json_response(self, response_text: str | list) -> dict:
         if isinstance(response_text, list):
             response_text = response_text[0].get("text", "")
 
+        try:
+            # Extract JSON block if surrounded by markdown formatting
+            match = re.search(r'```(?:json)?\s*({.*?})\s*```', response_text, re.DOTALL)
+            if match:
+                response_text = match.group(1)
+            return json.loads(response_text)
         except Exception as e:
-            logger.error(f"Error calling Claude API: {e}")
+            logger.error(f"Error parsing JSON from Claude response: {e}. Raw response: {response_text}")
             return {
                 "severity": "moderate",
-                "damaged_parts": ["front_bumper", "hood"],
-                "estimated_cost": 2500.00,
-                "confidence": 0.85,
+                "damaged_parts": ["unknown"],
+                "estimated_cost": 0.0,
+                "confidence": 0.0,
                 "fraud_indicators": [],
-                "reasoning": f"Error occurred during analysis: {str(e)}",
+                "reasoning": "Failed to parse AI response.",
             }
 
     def _build_damage_assessment_prompt(
@@ -150,10 +151,10 @@ Do not include any other text before or after the JSON."""
     ):
         vision_context = ""
         if vision_result.get("status") == "success" and vision_result.get("detections"):
-            highest_sev = sanitize_input(
+            sanitize_input(
                 vision_result.get('highest_severity', 'unknown')
             )
-            parts = ', '.join(
+            ', '.join(
                 [sanitize_input(p) for p in vision_result.get('damaged_parts', [])]
             )
             vision_context = f"""

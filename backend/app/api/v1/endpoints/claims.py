@@ -93,8 +93,9 @@ async def get_claim(claim_id: uuid.UUID, db: AsyncSession = Depends(get_db)) -> 
     return claim
 
 
-@router.get("/lookup/{claim_number}", response_model=ClaimResponse)
-async def lookup_claim(claim_number: str, db: AsyncSession = Depends(get_db)) -> Any:
+@router.get("/lookup/{claim_number}", response_model=ClaimPublicStatusResponse)
+@limiter.limit("5/minute")
+async def lookup_claim(request: Request, claim_number: str, db: AsyncSession = Depends(get_db)) -> Any:
     """
     Lookup a claim by claim_number without API key (public).
     Returns a restricted schema to avoid leaking PII.
