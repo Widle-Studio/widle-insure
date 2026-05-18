@@ -1,7 +1,9 @@
 import os
+
 import joblib
 import pandas as pd
 from sklearn.ensemble import IsolationForest
+
 
 def train_fraud_model():
     """

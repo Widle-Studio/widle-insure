@@ -16,13 +16,9 @@ def _setup_cors_env():
     pass
 
 
-from fastapi.testclient import TestClient
-
 
 def test_cors_preflight():
     from importlib import reload
-
-    from fastapi.testclient import TestClient
 
     import app.core.config
 
@@ -48,8 +44,6 @@ def test_cors_preflight():
 
 def test_cors_rejected_origin():
     from importlib import reload
-
-    from fastapi.testclient import TestClient
 
     import app.core.config
 

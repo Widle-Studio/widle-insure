@@ -6,7 +6,8 @@ from app.services.email import EmailService
 
 
 @pytest.mark.asyncio
-async def test_send_email_success():
+@patch("app.services.email.asyncio.to_thread")
+async def test_send_email_success(mock_to_thread):
     """Test successful email sending with Resend API enabled."""
     with patch("app.services.email.resend") as mock_resend, patch(
         "app.services.email.logger"
@@ -42,7 +43,8 @@ async def test_send_email_success():
 
 
 @pytest.mark.asyncio
-async def test_send_email_failure():
+@patch("app.services.email.asyncio.to_thread")
+async def test_send_email_failure(mock_to_thread):
     """Test error handling when Resend API fails."""
     with patch("app.services.email.resend") as mock_resend, patch(
         "app.services.email.logger"

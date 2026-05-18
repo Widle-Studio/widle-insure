@@ -1,8 +1,9 @@
+import logging
 import os
+from typing import Any, Dict
+
 import joblib
 import pandas as pd
-import logging
-from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,9 +32,12 @@ class MLFraudDetectionService:
         if not self.model:
             # Fallback heuristic
             score = 0
-            if estimated_cost > 10000: score += 15
-            if days_since_incident > 30: score += 20
-            if claim_history_count > 1: score += 25
+            if estimated_cost > 10000:
+                score += 15
+            if days_since_incident > 30:
+                score += 20
+            if claim_history_count > 1:
+                score += 25
 
             return {
                 "is_anomaly": score > 40,
